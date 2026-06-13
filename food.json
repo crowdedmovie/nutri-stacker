@@ -104,7 +104,7 @@
     "Zinc": 1.0,
     "VitamineE": 0.3
   },
-  "Blanc d'œuf": {
+  "Blanc d'oeuf": {
     "Ref_Qte": 1,
     "Unite": "unité (≈30g)",
     "Calories": 16,
@@ -629,7 +629,7 @@
     "Zinc": 0.16,
     "VitamineE": 0.23
   },
-  "Œuf entier": {
+  "Oeuf entier": {
     "Ref_Qte": 1,
     "Unite": "unité (≈60g)",
     "Calories": 86,
