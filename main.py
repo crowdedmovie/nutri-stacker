@@ -1,4 +1,5 @@
 import json
+import math
 import re
 import unicodedata
 from copy import deepcopy
@@ -61,11 +62,57 @@ DEFAULT_TARGETS = {
         "VitamineA": 900.0,
         "VitamineC": 350.0,
     },
+    "calculator_profile": {
+        "sex": "homme",
+        "age": 30,
+        "height_cm": 175.0,
+        "weight_kg": 75.0,
+        "body_fat_mode": "unknown",
+        "body_fat_pct": 15.0,
+        "neck_cm": 38.0,
+        "waist_cm": 85.0,
+        "hip_cm": 100.0,
+        "lifestyle_activity": "sedentaire",
+        "walk_km": 0.0,
+        "run_km": 0.0,
+        "strength_minutes": 0.0,
+        "strength_intensity": "moderee",
+        "goal_mode": "maintien",
+    },
 }
 
 NUTRIENT_GROUPS = {
     "macros": MACRO_CONFIG,
     "micros": MICRO_CONFIG,
+}
+
+ACTIVITY_LABELS = {
+    "sedentaire": "Sédentaire hors sport",
+    "leger": "Actif léger hors sport",
+    "modere": "Actif modéré hors sport",
+    "eleve": "Actif élevé hors sport",
+}
+
+ACTIVITY_FACTORS = {
+    "sedentaire": 1.2,
+    "leger": 1.35,
+    "modere": 1.5,
+    "eleve": 1.7,
+}
+
+STRENGTH_INTENSITIES = {
+    "legere": {"label": "Musculation légère", "met": 3.5},
+    "moderee": {"label": "Musculation modérée", "met": 5.0},
+    "intense": {"label": "Musculation intense", "met": 6.0},
+}
+
+GOAL_MODES = {
+    "cut_leger": {"label": "Cut léger", "adjustment": -0.10, "protein_factor": 2.0, "fat_factor": 0.8},
+    "cut_standard": {"label": "Cut standard", "adjustment": -0.15, "protein_factor": 2.2, "fat_factor": 0.8},
+    "cut_agressif": {"label": "Cut agressif", "adjustment": -0.20, "protein_factor": 2.3, "fat_factor": 0.75},
+    "maintien": {"label": "Maintien", "adjustment": 0.0, "protein_factor": 1.8, "fat_factor": 0.8},
+    "bulk_lean": {"label": "Bulk lean", "adjustment": 0.05, "protein_factor": 1.8, "fat_factor": 0.85},
+    "bulk_standard": {"label": "Bulk standard", "adjustment": 0.10, "protein_factor": 1.8, "fat_factor": 0.9},
 }
 
 
@@ -155,6 +202,30 @@ def normalize_targets(raw_targets) -> dict:
             value = candidate_group.get(nutrient_name)
             if isinstance(value, (int, float)):
                 normalized[group_name][nutrient_name] = float(value)
+
+    profile = raw_targets.get("calculator_profile", {})
+    default_profile = DEFAULT_TARGETS["calculator_profile"]
+    if isinstance(profile, dict):
+        for field_name, default_value in default_profile.items():
+            value = profile.get(field_name, default_value)
+            if isinstance(default_value, str):
+                normalized["calculator_profile"][field_name] = value if isinstance(value, str) else default_value
+            elif isinstance(default_value, int):
+                normalized["calculator_profile"][field_name] = int(value) if isinstance(value, (int, float)) else default_value
+            elif isinstance(default_value, float):
+                normalized["calculator_profile"][field_name] = float(value) if isinstance(value, (int, float)) else default_value
+
+    if normalized["calculator_profile"]["sex"] not in {"homme", "femme"}:
+        normalized["calculator_profile"]["sex"] = default_profile["sex"]
+    if normalized["calculator_profile"]["body_fat_mode"] not in {"unknown", "known", "estimate_navy"}:
+        normalized["calculator_profile"]["body_fat_mode"] = default_profile["body_fat_mode"]
+    if normalized["calculator_profile"]["lifestyle_activity"] not in ACTIVITY_FACTORS:
+        normalized["calculator_profile"]["lifestyle_activity"] = default_profile["lifestyle_activity"]
+    if normalized["calculator_profile"]["strength_intensity"] not in STRENGTH_INTENSITIES:
+        normalized["calculator_profile"]["strength_intensity"] = default_profile["strength_intensity"]
+    if normalized["calculator_profile"]["goal_mode"] not in GOAL_MODES:
+        normalized["calculator_profile"]["goal_mode"] = default_profile["goal_mode"]
+
     return normalized
 
 
@@ -203,6 +274,165 @@ def load_targets() -> tuple[dict, str | None]:
         write_json_file(TARGETS_FILE, normalized)
         return normalized, "Le fichier `user_targets.json` était incomplet. Les valeurs manquantes ont été complétées."
     return normalized, None
+
+
+def calculate_body_fat_navy(profile: dict) -> tuple[float | None, str | None]:
+    height_cm = profile["height_cm"]
+    neck_cm = profile["neck_cm"]
+    waist_cm = profile["waist_cm"]
+    hip_cm = profile["hip_cm"]
+
+    if height_cm <= 0 or neck_cm <= 0 or waist_cm <= 0:
+        return None, "Les mensurations de taille, cou et taille abdominale doivent être positives."
+
+    try:
+        if profile["sex"] == "homme":
+            difference = waist_cm - neck_cm
+            if difference <= 0:
+                return None, "Le tour de taille doit être supérieur au tour de cou pour estimer la masse grasse."
+            body_fat = 495 / (
+                1.0324 - 0.19077 * math.log10(difference) + 0.15456 * math.log10(height_cm)
+            ) - 450
+        else:
+            difference = waist_cm + hip_cm - neck_cm
+            if hip_cm <= 0 or difference <= 0:
+                return None, "Les tours de taille, hanches et cou doivent permettre une estimation valide."
+            body_fat = 495 / (
+                1.29579 - 0.35004 * math.log10(difference) + 0.22100 * math.log10(height_cm)
+            ) - 450
+    except ValueError:
+        return None, "Les mensurations fournies ne permettent pas de calculer la masse grasse."
+
+    return max(2.0, min(body_fat, 60.0)), None
+
+
+def calculate_mifflin_st_jeor(profile: dict) -> float:
+    sex_offset = 5 if profile["sex"] == "homme" else -161
+    return (
+        10 * profile["weight_kg"]
+        + 6.25 * profile["height_cm"]
+        - 5 * profile["age"]
+        + sex_offset
+    )
+
+
+def calculate_schofield(profile: dict) -> float:
+    age = profile["age"]
+    weight = profile["weight_kg"]
+    sex = profile["sex"]
+
+    if sex == "homme":
+        if age < 18:
+            return 17.686 * weight + 658.2
+        if age < 30:
+            return 15.057 * weight + 692.2
+        if age < 60:
+            return 11.472 * weight + 873.1
+        return 11.711 * weight + 587.7
+
+    if age < 18:
+        return 13.384 * weight + 692.6
+    if age < 30:
+        return 14.818 * weight + 486.6
+    if age < 60:
+        return 8.126 * weight + 845.6
+    return 9.082 * weight + 658.5
+
+
+def calculate_cunningham(profile: dict, body_fat_pct: float) -> float:
+    lean_mass = profile["weight_kg"] * (1 - body_fat_pct / 100)
+    return 500 + 22 * lean_mass
+
+
+def round_to_step(value: float, step: int) -> float:
+    return round(value / step) * step
+
+
+def calculate_recommended_targets(profile: dict) -> dict:
+    body_fat_pct = None
+    body_fat_error = None
+    if profile["body_fat_mode"] == "known":
+        body_fat_pct = profile["body_fat_pct"]
+    elif profile["body_fat_mode"] == "estimate_navy":
+        body_fat_pct, body_fat_error = calculate_body_fat_navy(profile)
+
+    ree_methods = {
+        "Mifflin-St Jeor": calculate_mifflin_st_jeor(profile),
+        "Schofield": calculate_schofield(profile),
+    }
+    if body_fat_pct is not None:
+        ree_methods["Cunningham"] = calculate_cunningham(profile, body_fat_pct)
+
+    if "Cunningham" in ree_methods:
+        weighted_ree = (
+            0.50 * ree_methods["Cunningham"]
+            + 0.35 * ree_methods["Mifflin-St Jeor"]
+            + 0.15 * ree_methods["Schofield"]
+        )
+    else:
+        weighted_ree = 0.60 * ree_methods["Mifflin-St Jeor"] + 0.40 * ree_methods["Schofield"]
+
+    activity_factor = ACTIVITY_FACTORS[profile["lifestyle_activity"]]
+    base_tdee = weighted_ree * activity_factor
+
+    walk_kcal = profile["weight_kg"] * profile["walk_km"] * 0.55
+    run_kcal = profile["weight_kg"] * profile["run_km"] * 1.0
+    strength_met = STRENGTH_INTENSITIES[profile["strength_intensity"]]["met"]
+    strength_hours = profile["strength_minutes"] / 60
+    strength_kcal = max(strength_met - 1.0, 0.0) * profile["weight_kg"] * strength_hours
+    exercise_kcal = walk_kcal + run_kcal + strength_kcal
+    maintenance_kcal = base_tdee + exercise_kcal
+
+    goal_config = GOAL_MODES[profile["goal_mode"]]
+    target_calories = maintenance_kcal * (1 + goal_config["adjustment"])
+
+    protein_g = profile["weight_kg"] * goal_config["protein_factor"]
+    fat_g = profile["weight_kg"] * goal_config["fat_factor"]
+    minimum_fat_g = profile["weight_kg"] * 0.6
+
+    remaining_kcal = target_calories - protein_g * 4 - fat_g * 9
+    if remaining_kcal < 0:
+        fat_g = max(minimum_fat_g, (target_calories - protein_g * 4) / 9)
+        remaining_kcal = target_calories - protein_g * 4 - fat_g * 9
+    if remaining_kcal < 0:
+        protein_g = max(profile["weight_kg"] * 1.6, (target_calories - fat_g * 9) / 4)
+        remaining_kcal = target_calories - protein_g * 4 - fat_g * 9
+    carbs_g = max(remaining_kcal / 4, 0.0)
+
+    walk_hours = profile["walk_km"] / 5 if profile["walk_km"] > 0 else 0.0
+    run_hours = profile["run_km"] / 9 if profile["run_km"] > 0 else 0.0
+    sodium_bonus = round_to_step(100 * walk_hours + 300 * run_hours + 250 * strength_hours, 50)
+    potassium_bonus = round_to_step(40 * walk_hours + 100 * run_hours + 80 * strength_hours, 10)
+    magnesium_bonus = round_to_step(3 * walk_hours + 10 * run_hours + 10 * strength_hours, 1)
+
+    recommended_micros = deepcopy(DEFAULT_TARGETS["micros"])
+    recommended_micros["Sodium"] += sodium_bonus
+    recommended_micros["Potassium"] += potassium_bonus
+    recommended_micros["Magnesium"] += magnesium_bonus
+
+    return {
+        "body_fat_pct": body_fat_pct,
+        "body_fat_error": body_fat_error,
+        "ree_methods": ree_methods,
+        "weighted_ree": weighted_ree,
+        "activity_factor": activity_factor,
+        "base_tdee": base_tdee,
+        "exercise_kcal": {
+            "walk": walk_kcal,
+            "run": run_kcal,
+            "strength": strength_kcal,
+            "total": exercise_kcal,
+        },
+        "maintenance_kcal": maintenance_kcal,
+        "goal_adjustment": goal_config["adjustment"],
+        "target_macros": {
+            "Calories": target_calories,
+            "Proteines": protein_g,
+            "Glucides": carbs_g,
+            "Lipides": fat_g,
+        },
+        "target_micros": recommended_micros,
+    }
 
 
 def slugify(value: str) -> str:
@@ -474,54 +704,230 @@ def render_meal_builder(foods: dict, targets: dict) -> None:
             st.info("Les résultats s'afficheront ici dès que tu ajoutes des aliments au repas.")
 
 
+def apply_recommended_targets(recommendation: dict) -> None:
+    for nutrient_name, value in recommendation["target_macros"].items():
+        st.session_state.target_inputs[nutrient_name] = float(value)
+        st.session_state[f"target_{nutrient_name}"] = float(value)
+    for nutrient_name, value in recommendation["target_micros"].items():
+        st.session_state.target_inputs[nutrient_name] = float(value)
+        st.session_state[f"target_{nutrient_name}"] = float(value)
+
+    st.session_state.targets["macros"] = {
+        name: float(st.session_state.target_inputs[name]) for name in MACRO_CONFIG
+    }
+    st.session_state.targets["micros"] = {
+        name: float(st.session_state.target_inputs[name]) for name in MICRO_CONFIG
+    }
+
+
+def update_profile_from_inputs() -> None:
+    st.session_state.targets["calculator_profile"] = {
+        "sex": st.session_state.calc_sex,
+        "age": int(st.session_state.calc_age),
+        "height_cm": float(st.session_state.calc_height_cm),
+        "weight_kg": float(st.session_state.calc_weight_kg),
+        "body_fat_mode": st.session_state.calc_body_fat_mode,
+        "body_fat_pct": float(st.session_state.calc_body_fat_pct),
+        "neck_cm": float(st.session_state.calc_neck_cm),
+        "waist_cm": float(st.session_state.calc_waist_cm),
+        "hip_cm": float(st.session_state.calc_hip_cm),
+        "lifestyle_activity": st.session_state.calc_lifestyle_activity,
+        "walk_km": float(st.session_state.calc_walk_km),
+        "run_km": float(st.session_state.calc_run_km),
+        "strength_minutes": float(st.session_state.calc_strength_minutes),
+        "strength_intensity": st.session_state.calc_strength_intensity,
+        "goal_mode": st.session_state.calc_goal_mode,
+    }
+
+
+def render_energy_calculator() -> dict:
+    st.markdown("### Calculateur de besoins journaliers")
+    st.caption(
+        "Le calcul combine Mifflin-St Jeor et Schofield, et ajoute Cunningham si la masse grasse "
+        "est connue ou estimée. Le niveau d'activité ici représente la vie quotidienne hors entraînement."
+    )
+
+    profile_col, activity_col = st.columns(2, gap="large")
+
+    with profile_col:
+        st.markdown("#### Profil")
+        st.radio(
+            "Sexe",
+            options=["homme", "femme"],
+            format_func=lambda value: "Homme" if value == "homme" else "Femme",
+            key="calc_sex",
+            horizontal=True,
+        )
+        st.number_input("Âge", min_value=15, max_value=90, step=1, key="calc_age")
+        st.number_input("Taille (cm)", min_value=120.0, max_value=230.0, step=1.0, key="calc_height_cm")
+        st.number_input("Poids (kg)", min_value=35.0, max_value=250.0, step=0.1, key="calc_weight_kg")
+
+        body_fat_mode = st.radio(
+            "Masse grasse",
+            options=["unknown", "known", "estimate_navy"],
+            format_func=lambda value: {
+                "unknown": "Je ne la renseigne pas",
+                "known": "Je connais mon taux",
+                "estimate_navy": "L'app l'estime (formule U.S. Navy)",
+            }[value],
+            key="calc_body_fat_mode",
+        )
+        if body_fat_mode == "known":
+            st.number_input(
+                "Taux de masse grasse (%)",
+                min_value=2.0,
+                max_value=60.0,
+                step=0.1,
+                key="calc_body_fat_pct",
+            )
+        elif body_fat_mode == "estimate_navy":
+            st.number_input("Tour de cou (cm)", min_value=20.0, max_value=70.0, step=0.1, key="calc_neck_cm")
+            st.number_input(
+                "Tour de taille abdominale (cm)",
+                min_value=40.0,
+                max_value=200.0,
+                step=0.1,
+                key="calc_waist_cm",
+            )
+            if st.session_state.calc_sex == "femme":
+                st.number_input("Tour de hanches (cm)", min_value=50.0, max_value=220.0, step=0.1, key="calc_hip_cm")
+            st.caption("Estimation pratique, utile pour affiner les calories mais moins fiable chez les profils atypiques.")
+
+    with activity_col:
+        st.markdown("#### Activité et objectif")
+        st.selectbox(
+            "Niveau d'activité hors sport",
+            options=list(ACTIVITY_FACTORS.keys()),
+            format_func=lambda value: ACTIVITY_LABELS[value],
+            key="calc_lifestyle_activity",
+        )
+        st.number_input("Marche du jour (km)", min_value=0.0, max_value=60.0, step=0.5, key="calc_walk_km")
+        st.number_input("Course du jour (km)", min_value=0.0, max_value=60.0, step=0.5, key="calc_run_km")
+        st.number_input(
+            "Musculation du jour (minutes)",
+            min_value=0.0,
+            max_value=300.0,
+            step=5.0,
+            key="calc_strength_minutes",
+        )
+        st.selectbox(
+            "Intensité de musculation",
+            options=list(STRENGTH_INTENSITIES.keys()),
+            format_func=lambda value: STRENGTH_INTENSITIES[value]["label"],
+            key="calc_strength_intensity",
+        )
+        st.selectbox(
+            "Objectif nutritionnel",
+            options=list(GOAL_MODES.keys()),
+            format_func=lambda value: GOAL_MODES[value]["label"],
+            key="calc_goal_mode",
+        )
+
+    update_profile_from_inputs()
+    recommendation = calculate_recommended_targets(st.session_state.targets["calculator_profile"])
+
+    if recommendation["body_fat_error"]:
+        st.warning(recommendation["body_fat_error"])
+
+    summary_columns = st.columns(4)
+    summary_columns[0].metric("Métabolisme estimé", f"{format_number(recommendation['weighted_ree'])} kcal")
+    summary_columns[1].metric("Maintien estimé", f"{format_number(recommendation['maintenance_kcal'])} kcal")
+    summary_columns[2].metric(
+        "Objectif calories",
+        f"{format_number(recommendation['target_macros']['Calories'])} kcal",
+    )
+    if recommendation["body_fat_pct"] is not None:
+        summary_columns[3].metric("Masse grasse estimée", f"{recommendation['body_fat_pct']:.1f}%")
+    else:
+        summary_columns[3].metric("Masse grasse", "Non utilisée")
+
+    with st.expander("Détail des méthodes de calcul"):
+        for method_name, value in recommendation["ree_methods"].items():
+            st.write(f"{method_name} : {format_number(value)} kcal")
+        st.write(f"Facteur d'activité hors sport : {recommendation['activity_factor']:.2f}")
+        st.write(
+            "Calories d'exercice ajoutées : "
+            f"marche {format_number(recommendation['exercise_kcal']['walk'])} kcal, "
+            f"course {format_number(recommendation['exercise_kcal']['run'])} kcal, "
+            f"musculation {format_number(recommendation['exercise_kcal']['strength'])} kcal."
+        )
+
+    st.markdown("#### Recommandation automatique")
+    recommendation_columns = st.columns(4)
+    for column, nutrient_name in zip(recommendation_columns, MACRO_CONFIG):
+        config = MACRO_CONFIG[nutrient_name]
+        column.metric(
+            config["label"],
+            f"{format_number(recommendation['target_macros'][nutrient_name])} {config['unit']}",
+        )
+
+    st.caption(
+        "Les micronutriments sont conservateurs : l'app garde la base actuelle et ajuste surtout sodium, "
+        "potassium et magnésium selon l'activité du jour."
+    )
+
+    if st.button("Appliquer les recommandations calculées"):
+        apply_recommended_targets(recommendation)
+        st.success("Les cibles calculées ont été injectées dans les objectifs ci-dessous.")
+
+    return recommendation
+
+
 def render_targets_editor(targets: dict) -> None:
     st.subheader("Objectifs nutritionnels")
-    st.write("Modifie tes cibles puis sauvegarde-les pour les retrouver automatiquement au prochain lancement.")
+    st.write(
+        "Calcule une base personnalisée pour tes calories et macros, puis ajuste librement les cibles "
+        "avant de les sauvegarder."
+    )
 
-    with st.form("targets_form"):
-        st.markdown("### Macros")
-        macro_columns = st.columns(2)
-        for index, (nutrient_name, config) in enumerate(MACRO_CONFIG.items()):
-            with macro_columns[index % 2]:
-                st.session_state.target_inputs[nutrient_name] = st.number_input(
-                    f"{config['label']} ({config['unit']})",
-                    min_value=0.0,
-                    value=float(st.session_state.target_inputs[nutrient_name]),
-                    step=10.0,
-                )
+    render_energy_calculator()
 
-        st.markdown("### Micros")
-        micro_columns = st.columns(2)
-        for index, (nutrient_name, config) in enumerate(MICRO_CONFIG.items()):
-            with micro_columns[index % 2]:
-                step = 0.5 if config["unit"] in {"mg", "µg", "µg ÉRA"} else 1.0
-                st.session_state.target_inputs[nutrient_name] = st.number_input(
-                    f"{config['label']} ({config['unit']})",
-                    min_value=0.0,
-                    value=float(st.session_state.target_inputs[nutrient_name]),
-                    step=step,
-                )
+    st.markdown("### Objectifs éditables")
+    macro_columns = st.columns(2)
+    for index, (nutrient_name, config) in enumerate(MACRO_CONFIG.items()):
+        with macro_columns[index % 2]:
+            st.session_state.target_inputs[nutrient_name] = st.number_input(
+                f"{config['label']} ({config['unit']})",
+                min_value=0.0,
+                step=10.0,
+                key=f"target_{nutrient_name}",
+            )
 
-        save_col, reset_col = st.columns(2)
-        save_submitted = save_col.form_submit_button("Sauvegarder les objectifs", type="primary")
-        reset_submitted = reset_col.form_submit_button("Réinitialiser aux valeurs par défaut")
+    st.markdown("### Micronutriments")
+    micro_columns = st.columns(2)
+    for index, (nutrient_name, config) in enumerate(MICRO_CONFIG.items()):
+        with micro_columns[index % 2]:
+            step = 0.5 if config["unit"] in {"mg", "µg", "µg ÉRA"} else 1.0
+            st.session_state.target_inputs[nutrient_name] = st.number_input(
+                f"{config['label']} ({config['unit']})",
+                min_value=0.0,
+                step=step,
+                key=f"target_{nutrient_name}",
+            )
 
-    if save_submitted:
+    save_col, reset_col = st.columns(2)
+
+    if save_col.button("Sauvegarder les objectifs", type="primary"):
+        update_profile_from_inputs()
         new_targets = {
             "macros": {name: float(st.session_state.target_inputs[name]) for name in MACRO_CONFIG},
             "micros": {name: float(st.session_state.target_inputs[name]) for name in MICRO_CONFIG},
+            "calculator_profile": deepcopy(st.session_state.targets["calculator_profile"]),
         }
         save_targets(new_targets)
-        st.session_state.targets = new_targets
+        st.session_state.targets = deepcopy(new_targets)
         st.success("Les objectifs ont été sauvegardés.")
 
-    if reset_submitted:
+    if reset_col.button("Réinitialiser aux valeurs par défaut"):
         reset_targets = deepcopy(DEFAULT_TARGETS)
         save_targets(reset_targets)
-        st.session_state.targets = reset_targets
+        st.session_state.targets = deepcopy(reset_targets)
         for group_name, config in NUTRIENT_GROUPS.items():
             for nutrient_name in config:
                 st.session_state.target_inputs[nutrient_name] = reset_targets[group_name][nutrient_name]
+                st.session_state[f"target_{nutrient_name}"] = reset_targets[group_name][nutrient_name]
+        for field_name, value in reset_targets["calculator_profile"].items():
+            st.session_state[f"calc_{field_name}"] = value
         st.success("Les objectifs par défaut ont été restaurés.")
         st.rerun()
 
@@ -613,6 +1019,15 @@ def initialize_state(targets: dict) -> None:
         for group_name, config in NUTRIENT_GROUPS.items():
             for nutrient_name in config:
                 st.session_state.target_inputs[nutrient_name] = st.session_state.targets[group_name][nutrient_name]
+    for group_name, config in NUTRIENT_GROUPS.items():
+        for nutrient_name in config:
+            widget_key = f"target_{nutrient_name}"
+            if widget_key not in st.session_state:
+                st.session_state[widget_key] = st.session_state.target_inputs[nutrient_name]
+    for field_name, value in st.session_state.targets["calculator_profile"].items():
+        session_key = f"calc_{field_name}"
+        if session_key not in st.session_state:
+            st.session_state[session_key] = value
 
 
 def main() -> None:
@@ -623,7 +1038,6 @@ def main() -> None:
     targets, targets_error = load_targets()
 
     initialize_state(targets)
-    st.session_state.targets = deepcopy(targets)
 
     st.title("Nutri Stacker")
     st.write(
