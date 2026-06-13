@@ -91,17 +91,24 @@ NUTRIENT_GROUPS = {
 }
 
 ACTIVITY_LABELS = {
-    "sedentaire": "Sédentaire hors sport",
-    "leger": "Actif léger hors sport",
-    "modere": "Actif modéré hors sport",
-    "eleve": "Actif élevé hors sport",
+    "sedentaire": "Sédentaire hors exercice",
+    "leger": "Léger hors exercice",
+    "modere": "Modéré hors exercice",
+    "eleve": "Élevé hors exercice",
 }
 
 ACTIVITY_FACTORS = {
     "sedentaire": 1.2,
-    "leger": 1.35,
-    "modere": 1.5,
-    "eleve": 1.7,
+    "leger": 1.3,
+    "modere": 1.4,
+    "eleve": 1.5,
+}
+
+ACTIVITY_DESCRIPTIONS = {
+    "sedentaire": "Travail assis, peu de déplacements, peu de marche quotidienne, pas de manutention.",
+    "leger": "Un peu de marche et de station debout dans la journée, mais mode de vie globalement calme.",
+    "modere": "Déplacements fréquents, plusieurs heures debout, activité quotidienne clairement active hors entraînement.",
+    "eleve": "Métier physique ou gros volume de déplacements quotidiens, même sans compter le sport saisi plus bas.",
 }
 
 STRENGTH_INTENSITIES = {
@@ -377,7 +384,8 @@ def calculate_recommended_targets(profile: dict) -> dict:
         weighted_ree = 0.60 * ree_methods["Mifflin-St Jeor"] + 0.40 * ree_methods["Schofield"]
 
     activity_factor = ACTIVITY_FACTORS[profile["lifestyle_activity"]]
-    base_tdee = weighted_ree * activity_factor
+    neat_kcal = weighted_ree * (activity_factor - 1.0)
+    base_tdee = weighted_ree + neat_kcal
 
     walk_kcal = profile["weight_kg"] * profile["walk_km"] * 0.55
     run_kcal = profile["weight_kg"] * profile["run_km"] * 1.0
@@ -420,6 +428,7 @@ def calculate_recommended_targets(profile: dict) -> dict:
         "ree_methods": ree_methods,
         "weighted_ree": weighted_ree,
         "activity_factor": activity_factor,
+        "neat_kcal": neat_kcal,
         "base_tdee": base_tdee,
         "exercise_kcal": {
             "walk": walk_kcal,
@@ -800,13 +809,34 @@ def render_energy_calculator() -> dict:
     with activity_col:
         st.markdown("#### Activité et objectif")
         st.selectbox(
-            "Niveau d'activité hors sport",
+            "Activité quotidienne hors exercice",
             options=list(ACTIVITY_FACTORS.keys()),
             format_func=lambda value: ACTIVITY_LABELS[value],
             key="calc_lifestyle_activity",
+            help=(
+                "Cette valeur décrit ton mode de vie quotidien hors marche sportive, hors course et hors musculation. "
+                "Elle sert à estimer ton NEAT sans double compter les activités saisies plus bas."
+            ),
         )
-        st.number_input("Marche du jour (km)", min_value=0.0, max_value=60.0, step=0.5, key="calc_walk_km")
-        st.number_input("Course du jour (km)", min_value=0.0, max_value=60.0, step=0.5, key="calc_run_km")
+        st.caption(ACTIVITY_DESCRIPTIONS[st.session_state.calc_lifestyle_activity])
+        st.info(
+            "Renseigne ci-dessous uniquement l'activité additionnelle non déjà représentée par ton mode de vie quotidien."
+        )
+        st.number_input(
+            "Marche additionnelle (km)",
+            min_value=0.0,
+            max_value=60.0,
+            step=0.5,
+            key="calc_walk_km",
+            help="Exemples : balade, tapis, randonnée, long trajet à pied inhabituel. Ne pas inclure la marche déjà normale de ta journée.",
+        )
+        st.number_input(
+            "Course du jour (km)",
+            min_value=0.0,
+            max_value=60.0,
+            step=0.5,
+            key="calc_run_km",
+        )
         st.number_input(
             "Musculation du jour (minutes)",
             min_value=0.0,
@@ -848,7 +878,8 @@ def render_energy_calculator() -> dict:
     with st.expander("Détail des méthodes de calcul"):
         for method_name, value in recommendation["ree_methods"].items():
             st.write(f"{method_name} : {format_number(value)} kcal")
-        st.write(f"Facteur d'activité hors sport : {recommendation['activity_factor']:.2f}")
+        st.write(f"Facteur d'activité quotidienne hors exercice : {recommendation['activity_factor']:.2f}")
+        st.write(f"Calories NEAT estimées : {format_number(recommendation['neat_kcal'])} kcal")
         st.write(
             "Calories d'exercice ajoutées : "
             f"marche {format_number(recommendation['exercise_kcal']['walk'])} kcal, "
