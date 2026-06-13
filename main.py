@@ -759,6 +759,10 @@ def render_energy_calculator() -> dict:
         "Le calcul combine Mifflin-St Jeor et Schofield, et ajoute Cunningham si la masse grasse "
         "est connue ou estimée. Le niveau d'activité ici représente la vie quotidienne hors entraînement."
     )
+    st.info(
+        "Info méthodologique : utilise les bulles d'aide des champs et le panneau 'Détail des méthodes de calcul' "
+        "pour voir les formules, hypothèses et limites du modèle."
+    )
 
     profile_col, activity_col = st.columns(2, gap="large")
 
@@ -770,10 +774,32 @@ def render_energy_calculator() -> dict:
             format_func=lambda value: "Homme" if value == "homme" else "Femme",
             key="calc_sex",
             horizontal=True,
+            help="Utilisé dans les équations de Mifflin-St Jeor, Schofield et dans la version homme/femme de la formule U.S. Navy.",
         )
-        st.number_input("Âge", min_value=15, max_value=90, step=1, key="calc_age")
-        st.number_input("Taille (cm)", min_value=120.0, max_value=230.0, step=1.0, key="calc_height_cm")
-        st.number_input("Poids (kg)", min_value=35.0, max_value=250.0, step=0.1, key="calc_weight_kg")
+        st.number_input(
+            "Âge",
+            min_value=15,
+            max_value=90,
+            step=1,
+            key="calc_age",
+            help="Intervient directement dans Mifflin-St Jeor et Schofield.",
+        )
+        st.number_input(
+            "Taille (cm)",
+            min_value=120.0,
+            max_value=230.0,
+            step=1.0,
+            key="calc_height_cm",
+            help="Utilisée pour Mifflin-St Jeor et, si besoin, pour la formule U.S. Navy.",
+        )
+        st.number_input(
+            "Poids (kg)",
+            min_value=35.0,
+            max_value=250.0,
+            step=0.1,
+            key="calc_weight_kg",
+            help="Utilisé dans toutes les équations de dépense et dans les estimations de marche, course et musculation.",
+        )
 
         body_fat_mode = st.radio(
             "Masse grasse",
@@ -784,6 +810,10 @@ def render_energy_calculator() -> dict:
                 "estimate_navy": "L'app l'estime (formule U.S. Navy)",
             }[value],
             key="calc_body_fat_mode",
+            help=(
+                "Si la masse grasse est connue ou estimée, l'app active Cunningham en plus de Mifflin-St Jeor "
+                "et Schofield pour mieux représenter la masse maigre."
+            ),
         )
         if body_fat_mode == "known":
             st.number_input(
@@ -792,18 +822,34 @@ def render_energy_calculator() -> dict:
                 max_value=60.0,
                 step=0.1,
                 key="calc_body_fat_pct",
+                help="Valeur saisie manuellement. Elle est utilisée pour calculer la masse maigre puis l'équation de Cunningham.",
             )
         elif body_fat_mode == "estimate_navy":
-            st.number_input("Tour de cou (cm)", min_value=20.0, max_value=70.0, step=0.1, key="calc_neck_cm")
+            st.number_input(
+                "Tour de cou (cm)",
+                min_value=20.0,
+                max_value=70.0,
+                step=0.1,
+                key="calc_neck_cm",
+                help="Mesure au niveau du cou, utilisée dans la formule U.S. Navy.",
+            )
             st.number_input(
                 "Tour de taille abdominale (cm)",
                 min_value=40.0,
                 max_value=200.0,
                 step=0.1,
                 key="calc_waist_cm",
+                help="Mesure au niveau abdominal. Pour l'estimation U.S. Navy, elle doit rester supérieure au tour de cou chez l'homme.",
             )
             if st.session_state.calc_sex == "femme":
-                st.number_input("Tour de hanches (cm)", min_value=50.0, max_value=220.0, step=0.1, key="calc_hip_cm")
+                st.number_input(
+                    "Tour de hanches (cm)",
+                    min_value=50.0,
+                    max_value=220.0,
+                    step=0.1,
+                    key="calc_hip_cm",
+                    help="Ajouté uniquement pour la version femme de la formule U.S. Navy.",
+                )
             st.caption("Estimation pratique, utile pour affiner les calories mais moins fiable chez les profils atypiques.")
 
     with activity_col:
@@ -836,6 +882,7 @@ def render_energy_calculator() -> dict:
             max_value=60.0,
             step=0.5,
             key="calc_run_km",
+            help="Estimée ici à environ 1.0 kcal par kg de poids corporel et par km couru.",
         )
         st.number_input(
             "Musculation du jour (minutes)",
@@ -843,18 +890,21 @@ def render_energy_calculator() -> dict:
             max_value=300.0,
             step=5.0,
             key="calc_strength_minutes",
+            help="Convertie en dépense via un MET d'intensité, moins 1 MET de repos déjà couvert par le métabolisme de base.",
         )
         st.selectbox(
             "Intensité de musculation",
             options=list(STRENGTH_INTENSITIES.keys()),
             format_func=lambda value: STRENGTH_INTENSITIES[value]["label"],
             key="calc_strength_intensity",
+            help="MET utilisé : léger 3.5, modéré 5.0, intense 6.0.",
         )
         st.selectbox(
             "Objectif nutritionnel",
             options=list(GOAL_MODES.keys()),
             format_func=lambda value: GOAL_MODES[value]["label"],
             key="calc_goal_mode",
+            help="Applique un ajustement calorique relatif au maintien, puis propose des macros cohérentes avec cet objectif.",
         )
 
     update_profile_from_inputs()
@@ -876,6 +926,51 @@ def render_energy_calculator() -> dict:
         summary_columns[3].metric("Masse grasse", "Non utilisée")
 
     with st.expander("Détail des méthodes de calcul"):
+        st.markdown("**Équations de base**")
+        st.write(
+            "Mifflin-St Jeor : `10 x poids(kg) + 6.25 x taille(cm) - 5 x âge + s` "
+            "avec `s = +5` pour un homme et `-161` pour une femme."
+        )
+        st.write("Schofield : équation par sexe et tranche d'âge, basée principalement sur le poids corporel.")
+        st.write("Cunningham : `500 + 22 x masse maigre(kg)` avec `masse maigre = poids x (1 - masse grasse)`.")
+        st.markdown("**Pondération utilisée**")
+        st.write(
+            "Sans masse grasse : `60% Mifflin-St Jeor + 40% Schofield`."
+        )
+        st.write(
+            "Avec masse grasse connue ou estimée : `50% Cunningham + 35% Mifflin-St Jeor + 15% Schofield`."
+        )
+        st.markdown("**Formule U.S. Navy pour la masse grasse**")
+        st.write(
+            "Homme : `%MG = 495 / (1.0324 - 0.19077 x log10(taille_abdo - cou) + 0.15456 x log10(taille)) - 450`."
+        )
+        st.write(
+            "Femme : `%MG = 495 / (1.29579 - 0.35004 x log10(taille_abdo + hanches - cou) + 0.22100 x log10(taille)) - 450`."
+        )
+        st.markdown("**Activité quotidienne et exercice**")
+        st.write(
+            "Le facteur d'activité quotidienne représente le NEAT hors exercice structuré. "
+            "L'app ajoute ensuite séparément la marche additionnelle, la course et la musculation pour limiter le double comptage."
+        )
+        st.write(
+            "Marche additionnelle : environ `0.55 kcal x poids(kg) x km`."
+        )
+        st.write(
+            "Course : environ `1.0 kcal x poids(kg) x km`."
+        )
+        st.write(
+            "Musculation : `(MET - 1) x poids(kg) x durée(h)` avec MET = 3.5, 5.0 ou 6.0 selon l'intensité."
+        )
+        st.markdown("**Objectif et macros**")
+        st.write(
+            "Les modes cut / maintien / bulk appliquent un pourcentage autour du maintien, puis fixent les protéines "
+            "et lipides par kg de poids corporel. Les glucides récupèrent les calories restantes."
+        )
+        st.markdown("**Limites**")
+        st.write(
+            "Les résultats restent des estimations. Ils sont utiles pour cadrer une cible initiale, mais doivent idéalement "
+            "être ajustés ensuite selon l'évolution du poids, des performances, de la faim et de la récupération."
+        )
         for method_name, value in recommendation["ree_methods"].items():
             st.write(f"{method_name} : {format_number(value)} kcal")
         st.write(f"Facteur d'activité quotidienne hors exercice : {recommendation['activity_factor']:.2f}")
