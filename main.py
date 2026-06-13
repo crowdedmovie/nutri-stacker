@@ -30,6 +30,7 @@ MACRO_CONFIG = {
 
 MICRO_CONFIG = {
     "Magnesium": {"label": "Magnésium", "unit": "mg"},
+    "Zinc": {"label": "Zinc", "unit": "mg"},
     "Bore": {"label": "Bore", "unit": "mg"},
     "Cholesterol": {"label": "Cholestérol", "unit": "mg"},
     "Sodium": {"label": "Sodium", "unit": "mg"},
@@ -39,6 +40,7 @@ MICRO_CONFIG = {
     "Potassium": {"label": "Potassium", "unit": "mg"},
     "Selenium": {"label": "Sélénium", "unit": "µg"},
     "VitamineA": {"label": "Vitamine A", "unit": "µg ÉRA"},
+    "VitamineE": {"label": "Vitamine E", "unit": "mg"},
     "VitamineC": {"label": "Vitamine C", "unit": "mg"},
 }
 
@@ -51,6 +53,7 @@ DEFAULT_TARGETS = {
     },
     "micros": {
         "Magnesium": 450.0,
+        "Zinc": 11.0,
         "Bore": 4.5,
         "Cholesterol": 850.0,
         "Sodium": 3000.0,
@@ -60,6 +63,7 @@ DEFAULT_TARGETS = {
         "Potassium": 4350.0,
         "Selenium": 112.5,
         "VitamineA": 900.0,
+        "VitamineE": 15.0,
         "VitamineC": 350.0,
     },
     "calculator_profile": {
