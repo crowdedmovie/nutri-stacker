@@ -73,41 +73,50 @@ def inject_styles() -> None:
     st.markdown(
         """
         <style>
+        :root {
+            --card-bg: color-mix(in srgb, var(--secondary-background-color) 82%, transparent);
+            --card-bg-strong: color-mix(in srgb, var(--secondary-background-color) 92%, transparent);
+            --card-border: color-mix(in srgb, var(--text-color) 14%, transparent);
+            --muted-text: color-mix(in srgb, var(--text-color) 72%, transparent);
+            --header-text: color-mix(in srgb, var(--text-color) 92%, white 8%);
+        }
         .macro-card {
-            border: 1px solid #d6dde5;
+            border: 1px solid var(--card-border);
             border-radius: 14px;
             padding: 1rem;
-            background: linear-gradient(180deg, #ffffff 0%, #f7fafc 100%);
+            background: linear-gradient(180deg, var(--card-bg-strong) 0%, var(--card-bg) 100%);
             min-height: 150px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
         }
         .macro-label {
-            color: #51606f;
+            color: var(--muted-text);
             font-size: 0.95rem;
             margin-bottom: 0.3rem;
         }
         .macro-value {
             font-size: 1.55rem;
             font-weight: 700;
-            color: #132238;
+            color: var(--text-color);
             margin-bottom: 0.15rem;
         }
         .macro-target {
-            color: #51606f;
+            color: var(--muted-text);
             font-size: 0.9rem;
             margin-bottom: 0.8rem;
         }
         .table-header {
             font-weight: 700;
-            color: #132238;
-            border-bottom: 1px solid #d6dde5;
+            color: var(--header-text);
+            border-bottom: 1px solid var(--card-border);
             padding-bottom: 0.45rem;
             margin-bottom: 0.5rem;
         }
         .food-summary {
-            border: 1px solid #dfe6ee;
+            border: 1px solid var(--card-border);
             border-radius: 12px;
             padding: 0.75rem 1rem;
-            background: #fafcfe;
+            background: var(--card-bg);
+            color: var(--text-color);
             margin-bottom: 0.75rem;
         }
         </style>
