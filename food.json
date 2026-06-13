@@ -1,0 +1,242 @@
+{
+  "Amandes": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 579, "Proteines": 21.1, "Glucides": 21.6, "Lipides": 49.9,
+    "Magnesium": 260, "Bore": 2.0, "Cholesterol": 0, "Sodium": 10, "Calcium": 250, "Iode": 0, "Omega3": 0, "Potassium": 700, "Selenium": 3, "VitamineA": 0, "VitamineC": 0
+  },
+  "Avocat moyen (pulpe)": {
+    "Ref_Qte": 1, "Unite": "unité (≈150g)",
+    "Calories": 240, "Proteines": 3.0, "Glucides": 12.8, "Lipides": 22.0,
+    "Magnesium": 53, "Bore": 2.3, "Cholesterol": 0, "Sodium": 11, "Calcium": 19, "Iode": 3.8, "Omega3": 0, "Potassium": 735, "Selenium": 4.5, "VitamineA": 225, "VitamineC": 15
+  },
+  "Banane moyenne": {
+    "Ref_Qte": 1, "Unite": "unité (≈120g)",
+    "Calories": 107, "Proteines": 1.3, "Glucides": 27.4, "Lipides": 0.4,
+    "Magnesium": 32, "Bore": 0.12, "Cholesterol": 0, "Sodium": 1, "Calcium": 6, "Iode": 0, "Omega3": 0, "Potassium": 450, "Selenium": 1.2, "VitamineA": 36, "VitamineC": 10
+  },
+  "Beurre de cacahuète (nature)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 588, "Proteines": 25.0, "Glucides": 20.0, "Lipides": 50.0,
+    "Magnesium": 154, "Bore": 1.0, "Cholesterol": 0, "Sodium": 15, "Calcium": 43, "Iode": 0, "Omega3": 0, "Potassium": 649, "Selenium": 5.6, "VitamineA": 0, "VitamineC": 0
+  },
+  "Blanc de poulet": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 110, "Proteines": 23.1, "Glucides": 0.0, "Lipides": 1.2,
+    "Magnesium": 20, "Bore": 0.035, "Cholesterol": 80, "Sodium": 70, "Calcium": 15, "Iode": 7.5, "Omega3": 0, "Potassium": 300, "Selenium": 25, "VitamineA": 30, "VitamineC": 0
+  },
+  "Blanc d'œuf": {
+    "Ref_Qte": 1, "Unite": "unité (≈30g)",
+    "Calories": 16, "Proteines": 3.3, "Glucides": 0.2, "Lipides": 0.0,
+    "Magnesium": 3.3, "Bore": 0.0, "Cholesterol": 0, "Sodium": 50, "Calcium": 2, "Iode": 1.0, "Omega3": 0, "Potassium": 49, "Selenium": 6.0, "VitamineA": 0, "VitamineC": 0
+  },
+  "Brocolis (cuits)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 35, "Proteines": 2.4, "Glucides": 7.2, "Lipides": 0.4,
+    "Magnesium": 25, "Bore": 0.2, "Cholesterol": 0, "Sodium": 15, "Calcium": 60, "Iode": 1, "Omega3": 0, "Potassium": 300, "Selenium": 2, "VitamineA": 100, "VitamineC": 60
+  },
+  "Cacao cru (poudre)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 228, "Proteines": 19.6, "Glucides": 10.8, "Lipides": 13.7,
+    "Magnesium": 425, "Bore": 0.3, "Cholesterol": 0, "Sodium": 15, "Calcium": 100, "Iode": 0, "Omega3": 0, "Potassium": 1500, "Selenium": 4, "VitamineA": 0, "VitamineC": 12.5
+  },
+  "Carottes": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 41, "Proteines": 0.9, "Glucides": 9.6, "Lipides": 0.2,
+    "Magnesium": 15, "Bore": 0.3, "Cholesterol": 0, "Sodium": 60, "Calcium": 30, "Iode": 2.0, "Omega3": 0, "Potassium": 310, "Selenium": 1, "VitamineA": 1400, "VitamineC": 25
+  },
+  "Chocolat noir 90 %": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 592, "Proteines": 10.0, "Glucides": 14.0, "Lipides": 55.0,
+    "Magnesium": 215, "Bore": 0.2, "Cholesterol": 0, "Sodium": 15, "Calcium": 60, "Iode": 0, "Omega3": 0, "Potassium": 800, "Selenium": 3, "VitamineA": 0, "VitamineC": 12.5
+  },
+  "Courgettes (cuites)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 15, "Proteines": 1.1, "Glucides": 2.7, "Lipides": 0.2,
+    "Magnesium": 18, "Bore": 0.1, "Cholesterol": 0, "Sodium": 3, "Calcium": 15, "Iode": 0, "Omega3": 0, "Potassium": 260, "Selenium": 0.2, "VitamineA": 10, "VitamineC": 12
+  },
+  "Crème de riz (cru)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 360, "Proteines": 7.0, "Glucides": 80.0, "Lipides": 1.0,
+    "Magnesium": 35, "Bore": 0.05, "Cholesterol": 0, "Sodium": 5, "Calcium": 10, "Iode": 0, "Omega3": 0, "Potassium": 100, "Selenium": 15, "VitamineA": 0, "VitamineC": 0
+  },
+  "Datte": {
+    "Ref_Qte": 1, "Unite": "unité (≈10g)",
+    "Calories": 28, "Proteines": 0.3, "Glucides": 7.5, "Lipides": 0.0,
+    "Magnesium": 5, "Bore": 0.1, "Cholesterol": 0, "Sodium": 0.5, "Calcium": 4, "Iode": 0, "Omega3": 0, "Potassium": 65, "Selenium": 0.2, "VitamineA": 40, "VitamineC": 1.5
+  },
+  "Dinde (escalope)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 105, "Proteines": 24.0, "Glucides": 0.0, "Lipides": 1.0,
+    "Magnesium": 22, "Bore": 0.035, "Cholesterol": 60, "Sodium": 50, "Calcium": 12, "Iode": 5.0, "Omega3": 0, "Potassium": 320, "Selenium": 22, "VitamineA": 10, "VitamineC": 0
+  },
+  "Épinards / Blettes": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 23, "Proteines": 2.9, "Glucides": 3.6, "Lipides": 0.4,
+    "Magnesium": 90, "Bore": 0.3, "Cholesterol": 0, "Sodium": 70, "Calcium": 90, "Iode": 2, "Omega3": 0, "Potassium": 450, "Selenium": 1, "VitamineA": 500, "VitamineC": 25
+  },
+  "Flocons d'avoine": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 370, "Proteines": 13.0, "Glucides": 59.0, "Lipides": 7.0,
+    "Magnesium": 120, "Bore": 0.2, "Cholesterol": 0, "Sodium": 5, "Calcium": 30, "Iode": 0, "Omega3": 0, "Potassium": 350, "Selenium": 12.5, "VitamineA": 0, "VitamineC": 0
+  },
+  "Fromage blanc 0%": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 48, "Proteines": 8.0, "Glucides": 4.0, "Lipides": 0.1,
+    "Magnesium": 10, "Bore": 0.02, "Cholesterol": 2, "Sodium": 40, "Calcium": 110, "Iode": 35, "Omega3": 0, "Potassium": 130, "Selenium": 2, "VitamineA": 0, "VitamineC": 0
+  },
+  "Galette de riz": {
+    "Ref_Qte": 1, "Unite": "unité (≈8g)",
+    "Calories": 31, "Proteines": 0.6, "Glucides": 6.5, "Lipides": 0.2,
+    "Magnesium": 9, "Bore": 0.0, "Cholesterol": 0, "Sodium": 25, "Calcium": 1, "Iode": 0, "Omega3": 0, "Potassium": 20, "Selenium": 1.0, "VitamineA": 0, "VitamineC": 0
+  },
+  "Graines de chia": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 486, "Proteines": 16.5, "Glucides": 42.0, "Lipides": 30.7,
+    "Magnesium": 335, "Bore": 0.5, "Cholesterol": 0, "Sodium": 16, "Calcium": 631, "Iode": 0, "Omega3": 17830, "Potassium": 407, "Selenium": 55, "VitamineA": 0, "VitamineC": 1
+  },
+  "Graines de courge": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 559, "Proteines": 30.2, "Glucides": 10.7, "Lipides": 49.0,
+    "Magnesium": 530, "Bore": 0.5, "Cholesterol": 0, "Sodium": 10, "Calcium": 50, "Iode": 0, "Omega3": 0, "Potassium": 800, "Selenium": 10, "VitamineA": 0, "VitamineC": 0
+  },
+  "Haricots verts (cuits)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 31, "Proteines": 1.8, "Glucides": 7.0, "Lipides": 0.2,
+    "Magnesium": 25, "Bore": 0.1, "Cholesterol": 0, "Sodium": 6, "Calcium": 37, "Iode": 0, "Omega3": 0, "Potassium": 210, "Selenium": 0.6, "VitamineA": 35, "VitamineC": 12
+  },
+  "Huile d'olive vierge extra": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 884, "Proteines": 0.0, "Glucides": 0.0, "Lipides": 100.0,
+    "Magnesium": 0, "Bore": 0, "Cholesterol": 0, "Sodium": 2, "Calcium": 1, "Iode": 0, "Omega3": 760, "Potassium": 1, "Selenium": 0, "VitamineA": 0, "VitamineC": 0
+  },
+  "Kiwi": {
+    "Ref_Qte": 1, "Unite": "unité (≈70g)",
+    "Calories": 43, "Proteines": 0.8, "Glucides": 10.3, "Lipides": 0.35,
+    "Magnesium": 12, "Bore": 0.1, "Cholesterol": 0, "Sodium": 2, "Calcium": 24, "Iode": 0.7, "Omega3": 0, "Potassium": 218, "Selenium": 0, "VitamineA": 35, "VitamineC": 60
+  },
+  "Lentilles (cuites)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 116, "Proteines": 9.0, "Glucides": 20.1, "Lipides": 0.4,
+    "Magnesium": 37.5, "Bore": 0.4, "Cholesterol": 0, "Sodium": 50, "Calcium": 50, "Iode": 0, "Omega3": 0, "Potassium": 350, "Selenium": 6.5, "VitamineA": 0, "VitamineC": 0
+  },
+  "Maquereau": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 205, "Proteines": 19.0, "Glucides": 0.0, "Lipides": 14.0,
+    "Magnesium": 35, "Bore": 0.03, "Cholesterol": 70, "Sodium": 400, "Calcium": 15, "Iode": 40, "Omega3": 3000, "Potassium": 425, "Selenium": 42.5, "VitamineA": 60, "VitamineC": 0
+  },
+  "Miel brut": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 304, "Proteines": 0.3, "Glucides": 82.4, "Lipides": 0.0,
+    "Magnesium": 2, "Bore": 0.75, "Cholesterol": 0, "Sodium": 5, "Calcium": 10, "Iode": 1.5, "Omega3": 0, "Potassium": 50, "Selenium": 1.5, "VitamineA": 0, "VitamineC": 7.5
+  },
+  "Myrtilles": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 57, "Proteines": 0.7, "Glucides": 14.5, "Lipides": 0.3,
+    "Magnesium": 6, "Bore": 0.1, "Cholesterol": 0, "Sodium": 1, "Calcium": 6, "Iode": 0, "Omega3": 0, "Potassium": 77, "Selenium": 0.1, "VitamineA": 3, "VitamineC": 10
+  },
+  "Noix (cerneaux)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 654, "Proteines": 15.2, "Glucides": 13.7, "Lipides": 65.2,
+    "Magnesium": 158, "Bore": 1.6, "Cholesterol": 0, "Sodium": 2, "Calcium": 98, "Iode": 0, "Omega3": 9080, "Potassium": 441, "Selenium": 4.9, "VitamineA": 0, "VitamineC": 1
+  },
+  "Noix de cajou": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 553, "Proteines": 18.2, "Glucides": 30.2, "Lipides": 43.8,
+    "Magnesium": 250, "Bore": 2.0, "Cholesterol": 0, "Sodium": 12, "Calcium": 37, "Iode": 0, "Omega3": 0, "Potassium": 660, "Selenium": 19.9, "VitamineA": 0, "VitamineC": 0
+  },
+  "Noix du Brésil": {
+    "Ref_Qte": 1, "Unite": "unité (≈4g)",
+    "Calories": 26, "Proteines": 0.6, "Glucides": 0.5, "Lipides": 2.7,
+    "Magnesium": 14, "Bore": 0.06, "Cholesterol": 0, "Sodium": 0.1, "Calcium": 6.4, "Iode": 0, "Omega3": 0, "Potassium": 24, "Selenium": 58.0, "VitamineA": 0, "VitamineC": 0
+  },
+  "Œuf entier": {
+    "Ref_Qte": 1, "Unite": "unité (≈60g)",
+    "Calories": 86, "Proteines": 7.6, "Glucides": 0.4, "Lipides": 5.7,
+    "Magnesium": 6.6, "Bore": 0.03, "Cholesterol": 200, "Sodium": 84, "Calcium": 33, "Iode": 16.5, "Omega3": 30, "Potassium": 72, "Selenium": 12.0, "VitamineA": 105, "VitamineC": 0
+  },
+  "Pain de mie complet": {
+    "Ref_Qte": 1, "Unite": "tranche (≈40g)",
+    "Calories": 98, "Proteines": 3.9, "Glucides": 17.2, "Lipides": 1.2,
+    "Magnesium": 30, "Bore": 0.1, "Cholesterol": 0, "Sodium": 180, "Calcium": 12, "Iode": 0, "Omega3": 0, "Potassium": 90, "Selenium": 12, "VitamineA": 0, "VitamineC": 0
+  },
+  "Patates douces (cuites)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 86, "Proteines": 1.6, "Glucides": 20.1, "Lipides": 0.1,
+    "Magnesium": 25, "Bore": 0.4, "Cholesterol": 0, "Sodium": 30, "Calcium": 30, "Iode": 2.0, "Omega3": 0, "Potassium": 350, "Selenium": 1, "VitamineA": 1800, "VitamineC": 25
+  },
+  "Pâtes complètes (cuites)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 124, "Proteines": 5.3, "Glucides": 26.5, "Lipides": 0.5,
+    "Magnesium": 42, "Bore": 0.2, "Cholesterol": 0, "Sodium": 1, "Calcium": 10, "Iode": 0, "Omega3": 0, "Potassium": 44, "Selenium": 22, "VitamineA": 0, "VitamineC": 0
+  },
+  "Pois chiches (cuits)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 164, "Proteines": 8.9, "Glucides": 27.4, "Lipides": 2.6,
+    "Magnesium": 48, "Bore": 0.4, "Cholesterol": 0, "Sodium": 7, "Calcium": 49, "Iode": 0, "Omega3": 0, "Potassium": 291, "Selenium": 3.7, "VitamineA": 1, "VitamineC": 1
+  },
+  "Poivrons rouges": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 26, "Proteines": 1.0, "Glucides": 6.0, "Lipides": 0.3,
+    "Magnesium": 12, "Bore": 0.3, "Cholesterol": 0, "Sodium": 4, "Calcium": 10, "Iode": 2.0, "Omega3": 0, "Potassium": 250, "Selenium": 1, "VitamineA": 600, "VitamineC": 135
+  },
+  "Pomme moyenne": {
+    "Ref_Qte": 1, "Unite": "unité (≈150g)",
+    "Calories": 78, "Proteines": 0.4, "Glucides": 20.6, "Lipides": 0.3,
+    "Magnesium": 7.5, "Bore": 0.4, "Cholesterol": 0, "Sodium": 1.5, "Calcium": 9, "Iode": 0, "Omega3": 0, "Potassium": 160, "Selenium": 0, "VitamineA": 5, "VitamineC": 7
+  },
+  "Pommes de terre (cuites, avec peau)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 87, "Proteines": 1.9, "Glucides": 20.1, "Lipides": 0.1,
+    "Magnesium": 23, "Bore": 0.2, "Cholesterol": 0, "Sodium": 5, "Calcium": 12, "Iode": 1, "Omega3": 0, "Potassium": 425, "Selenium": 1, "VitamineA": 0, "VitamineC": 15
+  },
+  "Pruneau": {
+    "Ref_Qte": 1, "Unite": "unité (≈10g)",
+    "Calories": 24, "Proteines": 0.2, "Glucides": 6.4, "Lipides": 0.0,
+    "Magnesium": 4, "Bore": 0.22, "Cholesterol": 0, "Sodium": 0.2, "Calcium": 4.3, "Iode": 0, "Omega3": 0, "Potassium": 90, "Selenium": 0, "VitamineA": 40, "VitamineC": 3
+  },
+  "Riz basmati (cuit)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 121, "Proteines": 3.5, "Glucides": 25.2, "Lipides": 0.4,
+    "Magnesium": 12, "Bore": 0.05, "Cholesterol": 0, "Sodium": 1, "Calcium": 3, "Iode": 0, "Omega3": 0, "Potassium": 32, "Selenium": 5, "VitamineA": 0, "VitamineC": 0
+  },
+  "Sardines en conserve": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 208, "Proteines": 24.6, "Glucides": 0.0, "Lipides": 11.5,
+    "Magnesium": 37.5, "Bore": 0.035, "Cholesterol": 70, "Sodium": 400, "Calcium": 375, "Iode": 40, "Omega3": 2150, "Potassium": 425, "Selenium": 55, "VitamineA": 60, "VitamineC": 0
+  },
+  "Saumon sauvage": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 142, "Proteines": 19.8, "Glucides": 0.0, "Lipides": 6.3,
+    "Magnesium": 30, "Bore": 0.03, "Cholesterol": 70, "Sodium": 60, "Calcium": 15, "Iode": 40, "Omega3": 1600, "Potassium": 425, "Selenium": 42.5, "VitamineA": 50, "VitamineC": 0
+  },
+  "Skyr nature": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 62, "Proteines": 10.0, "Glucides": 4.0, "Lipides": 0.2,
+    "Magnesium": 11, "Bore": 0.03, "Cholesterol": 15, "Sodium": 100, "Calcium": 165, "Iode": 40, "Omega3": 0, "Potassium": 150, "Selenium": 7.5, "VitamineA": 0, "VitamineC": 0
+  },
+  "Steak haché 15%": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 215, "Proteines": 20.0, "Glucides": 0.0, "Lipides": 15.0,
+    "Magnesium": 20, "Bore": 0.035, "Cholesterol": 80, "Sodium": 65, "Calcium": 12, "Iode": 7.5, "Omega3": 0, "Potassium": 320, "Selenium": 18, "VitamineA": 0, "VitamineC": 0
+  },
+  "Steak haché 5%": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 125, "Proteines": 21.0, "Glucides": 0.0, "Lipides": 5.0,
+    "Magnesium": 22.5, "Bore": 0.035, "Cholesterol": 75, "Sodium": 70, "Calcium": 15, "Iode": 7.5, "Omega3": 0, "Potassium": 350, "Selenium": 20, "VitamineA": 0, "VitamineC": 0
+  },
+  "Thon en conserve (eau)": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 110, "Proteines": 25.0, "Glucides": 0.0, "Lipides": 1.0,
+    "Magnesium": 30, "Bore": 0.03, "Cholesterol": 40, "Sodium": 300, "Calcium": 15, "Iode": 15, "Omega3": 200, "Potassium": 250, "Selenium": 70, "VitamineA": 10, "VitamineC": 0
+  },
+  "Tofu ferme": {
+    "Ref_Qte": 100, "Unite": "g",
+    "Calories": 144, "Proteines": 15.8, "Glucides": 2.8, "Lipides": 8.7,
+    "Magnesium": 58, "Bore": 0.2, "Cholesterol": 0, "Sodium": 14, "Calcium": 350, "Iode": 0, "Omega3": 400, "Potassium": 121, "Selenium": 17.4, "VitamineA": 0, "VitamineC": 0
+  },
+  "Whey Isolate": {
+    "Ref_Qte": 1, "Unite": "dose (≈30g)",
+    "Calories": 110, "Proteines": 26.0, "Glucides": 1.0, "Lipides": 0.5,
+    "Magnesium": 15, "Bore": 0.0, "Cholesterol": 5, "Sodium": 50, "Calcium": 120, "Iode": 10, "Omega3": 0, "Potassium": 150, "Selenium": 5.0, "VitamineA": 0, "VitamineC": 0
+  }
+}
