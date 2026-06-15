@@ -13,6 +13,7 @@ from app.config import (
     MICRO_CONFIG,
     STRENGTH_INTENSITIES,
 )
+from app.i18n import t
 
 
 def calculate_body_fat_navy(profile: dict) -> tuple[float | None, str | None]:
@@ -22,25 +23,25 @@ def calculate_body_fat_navy(profile: dict) -> tuple[float | None, str | None]:
     hip_cm = profile["hip_cm"]
 
     if height_cm <= 0 or neck_cm <= 0 or waist_cm <= 0:
-        return None, "Les mensurations de taille, cou et taille abdominale doivent être positives."
+        return None, t("bodyfat_positive")
 
     try:
         if profile["sex"] == "homme":
             difference = waist_cm - neck_cm
             if difference <= 0:
-                return None, "Le tour de taille doit être supérieur au tour de cou pour estimer la masse grasse."
+                return None, t("bodyfat_male_invalid")
             body_fat = 495 / (
                 1.0324 - 0.19077 * math.log10(difference) + 0.15456 * math.log10(height_cm)
             ) - 450
         else:
             difference = waist_cm + hip_cm - neck_cm
             if hip_cm <= 0 or difference <= 0:
-                return None, "Les tours de taille, hanches et cou doivent permettre une estimation valide."
+                return None, t("bodyfat_female_invalid")
             body_fat = 495 / (
                 1.29579 - 0.35004 * math.log10(difference) + 0.22100 * math.log10(height_cm)
             ) - 450
     except ValueError:
-        return None, "Les mensurations fournies ne permettent pas de calculer la masse grasse."
+        return None, t("bodyfat_calc_invalid")
 
     return max(2.0, min(body_fat, 60.0)), None
 

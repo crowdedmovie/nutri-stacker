@@ -68,6 +68,9 @@ DEFAULT_TARGETS = {
         "strength_intensity": "moderee",
         "goal_mode": "maintien",
     },
+    "app_settings": {
+        "language": "fr",
+    },
 }
 
 NUTRIENT_GROUPS = {

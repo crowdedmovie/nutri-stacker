@@ -16,6 +16,7 @@ from app.config import (
     TARGETS_FILE,
 )
 from app.calculations import slugify
+from app.i18n import t
 
 
 def read_json_file(path: Path):
@@ -72,6 +73,13 @@ def normalize_targets(raw_targets) -> dict:
     if normalized["calculator_profile"]["goal_mode"] not in GOAL_MODES:
         normalized["calculator_profile"]["goal_mode"] = default_profile["goal_mode"]
 
+    app_settings = raw_targets.get("app_settings", {})
+    default_settings = DEFAULT_TARGETS["app_settings"]
+    if isinstance(app_settings, dict) and app_settings.get("language") in {"fr", "en"}:
+        normalized["app_settings"]["language"] = app_settings["language"]
+    else:
+        normalized["app_settings"]["language"] = default_settings["language"]
+
     return normalized
 
 
@@ -79,12 +87,12 @@ def load_foods() -> tuple[dict, str | None]:
     try:
         foods = read_json_file(FOOD_FILE)
     except FileNotFoundError:
-        return {}, "Le fichier `food.json` est introuvable."
+        return {}, t("error_food_missing")
     except json.JSONDecodeError as error:
-        return {}, f"Le fichier `food.json` est invalide : {error}"
+        return {}, t("error_food_invalid", error=error)
 
     if not isinstance(foods, dict):
-        return {}, "Le fichier `food.json` doit contenir un objet JSON indexé par nom d'aliment."
+        return {}, t("error_food_shape")
 
     required_fields = {"Ref_Qte", "Unite", *MACRO_CONFIG.keys()}
     normalized_foods = {}
@@ -94,10 +102,7 @@ def load_foods() -> tuple[dict, str | None]:
             continue
         missing_fields = required_fields.difference(values.keys())
         if missing_fields:
-            return {}, (
-                f"L'aliment '{food_name}' ne contient pas tous les champs requis : "
-                f"{', '.join(sorted(missing_fields))}."
-            )
+            return {}, t("error_food_required", food=food_name, fields=", ".join(sorted(missing_fields)))
         normalized_foods[food_name] = values
 
     return normalized_foods, None
@@ -113,12 +118,12 @@ def load_targets() -> tuple[dict, str | None]:
     except json.JSONDecodeError as error:
         normalized = deepcopy(DEFAULT_TARGETS)
         write_json_file(TARGETS_FILE, normalized)
-        return normalized, f"Le fichier `user_targets.json` était invalide et a été réinitialisé : {error}"
+        return normalized, t("targets_invalid_reset", error=error)
 
     normalized = normalize_targets(raw_targets)
     if normalized != raw_targets:
         write_json_file(TARGETS_FILE, normalized)
-        return normalized, "Le fichier `user_targets.json` était incomplet. Les valeurs manquantes ont été complétées."
+        return normalized, t("targets_incomplete_completed")
     return normalized, None
 
 
@@ -127,7 +132,7 @@ def list_saved_meals() -> tuple[list[dict], str | None]:
     try:
         files = sorted(MEALS_DIR.glob("*.json"))
     except OSError as error:
-        return [], f"Impossible de lire le dossier `saved_meals` : {error}"
+        return [], t("saved_meals_read_error", error=error)
 
     for path in files:
         try:
@@ -136,7 +141,7 @@ def list_saved_meals() -> tuple[list[dict], str | None]:
             meals.append(
                 {
                     "path": path,
-                    "name": f"{path.stem} (fichier invalide)",
+                    "name": f"{path.stem} ({t('invalid_file_suffix')})",
                     "created_at": "",
                     "items": [],
                     "invalid": True,
@@ -175,13 +180,13 @@ def load_meal_file(path: Path) -> tuple[dict, str | None]:
     try:
         meal = read_json_file(path)
     except FileNotFoundError:
-        return {}, "Le fichier de repas n'existe plus."
+        return {}, t("meal_missing")
     except json.JSONDecodeError as error:
-        return {}, f"Le fichier de repas est invalide : {error}"
+        return {}, t("meal_invalid", error=error)
 
     items = meal.get("items", [])
     if not isinstance(items, list):
-        return {}, "Le fichier de repas ne contient pas une liste `items` valide."
+        return {}, t("meal_items_invalid")
 
     loaded_items = {}
     for item in items:
