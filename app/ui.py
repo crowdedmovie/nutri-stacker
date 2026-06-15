@@ -334,6 +334,9 @@ def render_meal_builder(foods: dict, targets: dict) -> None:
     inject_multiselect_keyboard_guard()
     food_to_display = {food_name: food_label(food_name) for food_name in foods}
     display_to_food = {display_name: food_name for food_name, display_name in food_to_display.items()}
+    pending_display_names = st.session_state.pop("pending_selected_food_display_names", None)
+    if pending_display_names is not None:
+        st.session_state.selected_food_display_names = pending_display_names
     if "selected_food_display_names" not in st.session_state:
         st.session_state.selected_food_display_names = [
             food_to_display[food_name]
@@ -674,7 +677,7 @@ def render_saved_meals(foods: dict) -> None:
             for food_name, quantity in loaded_items.items()
             if food_name in foods
         }
-        st.session_state.selected_food_display_names = [
+        st.session_state.pending_selected_food_display_names = [
             food_label(food_name) for food_name in st.session_state.meal_items.keys()
         ]
         for key in list(st.session_state.keys()):
@@ -707,6 +710,8 @@ def initialize_state(targets: dict) -> None:
         st.session_state.meal_items = {}
     if "selected_food_display_names" not in st.session_state:
         st.session_state.selected_food_display_names = []
+    if "pending_selected_food_display_names" not in st.session_state:
+        st.session_state.pending_selected_food_display_names = None
     if "meal_name" not in st.session_state:
         st.session_state.meal_name = ""
     if "notice" not in st.session_state:
