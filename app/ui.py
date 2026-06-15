@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from app.calculations import (
     calculate_recommended_targets,
@@ -92,9 +93,97 @@ def inject_styles() -> None:
             color: var(--muted-text);
             font-size: 0.92rem;
         }
+        .food-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.65rem;
+            margin: 0.35rem 0 0.85rem;
+        }
+        .food-detail-card {
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 0.7rem 0.8rem;
+            background: var(--card-bg);
+        }
+        .food-detail-label {
+            color: var(--muted-text);
+            font-size: 0.82rem;
+            margin-bottom: 0.2rem;
+        }
+        .food-detail-value {
+            color: var(--text-color);
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .food-micro-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 0.45rem 0.9rem;
+        }
+        .food-micro-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.45rem 0.55rem;
+            border-radius: 8px;
+            background: color-mix(in srgb, var(--card-bg) 82%, transparent);
+        }
+        .food-micro-name {
+            color: var(--muted-text);
+            font-size: 0.88rem;
+        }
+        .food-micro-value {
+            color: var(--text-color);
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
         </style>
         """,
         unsafe_allow_html=True,
+    )
+
+
+def inject_multiselect_keyboard_guard() -> None:
+    components.html(
+        """
+        <script>
+        const doc = window.parent.document;
+        if (!doc.__nutriStackerMultiSelectGuard) {
+            doc.__nutriStackerMultiSelectGuard = true;
+            doc.addEventListener("keydown", function(event) {
+                const isDeleteKey = event.key === "Backspace" || event.key === "Delete";
+                if (!isDeleteKey) {
+                    return;
+                }
+
+                const active = doc.activeElement;
+                if (!active) {
+                    return;
+                }
+
+                const multiSelect = active.closest('div[data-testid="stMultiSelect"]');
+                if (!multiSelect) {
+                    return;
+                }
+
+                const currentValue = typeof active.value === "string" ? active.value : "";
+                const hasSelectionRange =
+                    typeof active.selectionStart === "number" &&
+                    typeof active.selectionEnd === "number" &&
+                    active.selectionStart !== active.selectionEnd;
+
+                if (currentValue.length > 0 || hasSelectionRange) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+            }, true);
+        }
+        </script>
+        """,
+        height=0,
     )
 
 
@@ -208,30 +297,63 @@ def render_micro_table(micro_totals: dict, targets: dict) -> None:
             st.progress(0.0 if target_value <= 0 else min(current_value / target_value, 1.0))
 
 
+def render_food_breakdown(detail: dict) -> None:
+    macro_cards = []
+    for nutrient_name, config in MACRO_CONFIG.items():
+        macro_cards.append(
+            (
+                "<div class='food-detail-card'>"
+                f"<div class='food-detail-label'>{nutrient_label(nutrient_name)}</div>"
+                f"<div class='food-detail-value'>{format_number(detail['macros'][nutrient_name])} {config['unit']}</div>"
+                "</div>"
+            )
+        )
+
+    micro_items = []
+    for nutrient_name, config in MICRO_CONFIG.items():
+        micro_items.append(
+            (
+                "<div class='food-micro-item'>"
+                f"<span class='food-micro-name'>{nutrient_label(nutrient_name)}</span>"
+                f"<span class='food-micro-value'>{format_number(detail['micros'][nutrient_name])} {config['unit']}</span>"
+                "</div>"
+            )
+        )
+
+    st.markdown(f"**{t('food_macros_title')}**")
+    st.markdown(f"<div class='food-detail-grid'>{''.join(macro_cards)}</div>", unsafe_allow_html=True)
+    st.markdown(f"**{t('food_micros_title')}**")
+    st.markdown(f"<div class='food-micro-grid'>{''.join(micro_items)}</div>", unsafe_allow_html=True)
+
+
 def render_meal_builder(foods: dict, targets: dict) -> None:
     st.subheader(t("meal_subheader"))
     col_input, col_results = st.columns([1.05, 1.35], gap="large")
 
-    with col_input:
-        st.write(t("meal_intro"))
-        food_to_display = {food_name: food_label(food_name) for food_name in foods}
-        display_to_food = {display_name: food_name for food_name, display_name in food_to_display.items()}
-        if "selected_food_display_names" not in st.session_state:
-            st.session_state.selected_food_display_names = [
-                food_to_display[food_name]
-                for food_name in st.session_state.meal_items.keys()
-                if food_name in food_to_display
-            ]
+    st.write(t("meal_intro"))
+    inject_multiselect_keyboard_guard()
+    food_to_display = {food_name: food_label(food_name) for food_name in foods}
+    display_to_food = {display_name: food_name for food_name, display_name in food_to_display.items()}
+    if "selected_food_display_names" not in st.session_state:
+        st.session_state.selected_food_display_names = [
+            food_to_display[food_name]
+            for food_name in st.session_state.meal_items.keys()
+            if food_name in food_to_display
+        ]
 
+    with col_input:
         selected_display_names = st.multiselect(
             t("foods_label"),
             options=sorted(display_to_food.keys()),
             placeholder=t("foods_placeholder"),
             key="selected_food_display_names",
         )
-        selected_foods = [display_to_food[display_name] for display_name in selected_display_names]
-        sync_selected_foods(selected_foods, foods)
 
+    selected_foods = [display_to_food[display_name] for display_name in selected_display_names]
+    sync_selected_foods(selected_foods, foods)
+    macro_totals, micro_totals, details, missing_foods = calculate_totals(st.session_state.meal_items, foods)
+
+    with col_input:
         if not selected_foods:
             st.info(t("meal_empty"))
         else:
@@ -248,7 +370,7 @@ def render_meal_builder(foods: dict, targets: dict) -> None:
                     )
 
                 with st.container(border=True):
-                    info_col, qty_col = st.columns([1.5, 1], gap="medium", vertical_alignment="center")
+                    info_col, qty_col = st.columns([1.45, 1], gap="medium", vertical_alignment="center")
                     with info_col:
                         st.markdown(
                             (
@@ -266,9 +388,12 @@ def render_meal_builder(foods: dict, targets: dict) -> None:
                             key=quantity_key,
                             help=t("quantity_help", unit=reference_unit),
                         )
-                st.session_state.meal_items[food_name] = float(quantity)
+                    st.session_state.meal_items[food_name] = float(quantity)
 
-    macro_totals, micro_totals, details, missing_foods = calculate_totals(st.session_state.meal_items, foods)
+                    single_details = calculate_totals({food_name: float(quantity)}, foods)[2]
+                    if single_details:
+                        with st.expander(t("food_detail"), expanded=False):
+                            render_food_breakdown(single_details[0])
 
     with col_results:
         st.subheader(t("nutrition_analysis"))
@@ -279,13 +404,6 @@ def render_meal_builder(foods: dict, targets: dict) -> None:
             render_macro_cards(macro_totals, targets)
             st.markdown(f"### {t('micronutrients_title')}")
             render_micro_table(micro_totals, targets)
-
-            with st.expander(t("food_detail")):
-                for detail in details:
-                    st.write(
-                        f"{food_label(detail['food'])} - {format_number(detail['quantity'])} {detail['unit']} - "
-                        f"{format_number(detail['macros']['Calories'])} kcal"
-                    )
         else:
             st.info(t("results_waiting"))
 
