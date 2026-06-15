@@ -216,11 +216,18 @@ def render_meal_builder(foods: dict, targets: dict) -> None:
         st.write(t("meal_intro"))
         food_to_display = {food_name: food_label(food_name) for food_name in foods}
         display_to_food = {display_name: food_name for food_name, display_name in food_to_display.items()}
+        if "selected_food_display_names" not in st.session_state:
+            st.session_state.selected_food_display_names = [
+                food_to_display[food_name]
+                for food_name in st.session_state.meal_items.keys()
+                if food_name in food_to_display
+            ]
+
         selected_display_names = st.multiselect(
             t("foods_label"),
             options=sorted(display_to_food.keys()),
-            default=[food_to_display[food_name] for food_name in st.session_state.meal_items.keys() if food_name in food_to_display],
             placeholder=t("foods_placeholder"),
+            key="selected_food_display_names",
         )
         selected_foods = [display_to_food[display_name] for display_name in selected_display_names]
         sync_selected_foods(selected_foods, foods)
@@ -549,6 +556,9 @@ def render_saved_meals(foods: dict) -> None:
             for food_name, quantity in loaded_items.items()
             if food_name in foods
         }
+        st.session_state.selected_food_display_names = [
+            food_label(food_name) for food_name in st.session_state.meal_items.keys()
+        ]
         for key in list(st.session_state.keys()):
             if key.startswith("qty_"):
                 st.session_state.pop(key)
@@ -577,6 +587,8 @@ def initialize_state(targets: dict) -> None:
         st.session_state.targets["app_settings"] = deepcopy(targets.get("app_settings", DEFAULT_TARGETS["app_settings"]))
     if "meal_items" not in st.session_state:
         st.session_state.meal_items = {}
+    if "selected_food_display_names" not in st.session_state:
+        st.session_state.selected_food_display_names = []
     if "meal_name" not in st.session_state:
         st.session_state.meal_name = ""
     if "notice" not in st.session_state:
