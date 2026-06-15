@@ -594,6 +594,31 @@ def format_number(value: float) -> str:
     return f"{value:.2f}"
 
 
+def push_notice(message: str, scope: str, kind: str = "success") -> None:
+    st.session_state.notice = {"message": message, "kind": kind, "scope": scope}
+
+
+def render_notice(scope: str) -> None:
+    notice = st.session_state.get("notice")
+    if not notice:
+        return
+    if notice.get("scope") != scope:
+        return
+
+    message_col, close_col = st.columns([0.95, 0.05], vertical_alignment="center")
+    with message_col:
+        if notice["kind"] == "success":
+            st.success(notice["message"])
+        elif notice["kind"] == "warning":
+            st.warning(notice["message"])
+        else:
+            st.info(notice["message"])
+    with close_col:
+        if st.button("✕", key=f"close_notice_{scope}", help="Fermer ce message"):
+            st.session_state.notice = None
+            st.rerun()
+
+
 def render_macro_cards(macro_totals: dict, targets: dict) -> None:
     macro_columns = st.columns(len(MACRO_CONFIG))
     for column, (nutrient_name, config) in zip(macro_columns, MACRO_CONFIG.items()):
@@ -996,9 +1021,11 @@ def render_energy_calculator() -> dict:
         "potassium et magnésium selon l'activité du jour."
     )
 
+    render_notice("targets_reco")
     if st.button("Appliquer les recommandations calculées"):
         apply_recommended_targets(recommendation)
-        st.success("Les cibles calculées ont été injectées dans les objectifs ci-dessous.")
+        push_notice("Les cibles calculées ont été injectées dans les objectifs ci-dessous.", "targets_reco")
+        st.rerun()
 
     return recommendation
 
@@ -1036,6 +1063,7 @@ def render_targets_editor(targets: dict) -> None:
             )
 
     save_col, reset_col = st.columns(2)
+    render_notice("targets_actions")
 
     if save_col.button("Sauvegarder les objectifs", type="primary"):
         update_profile_from_inputs()
@@ -1046,7 +1074,8 @@ def render_targets_editor(targets: dict) -> None:
         }
         save_targets(new_targets)
         st.session_state.targets = deepcopy(new_targets)
-        st.success("Les objectifs ont été sauvegardés.")
+        push_notice("Les objectifs ont été sauvegardés.", "targets_actions")
+        st.rerun()
 
     if reset_col.button("Réinitialiser aux valeurs par défaut"):
         reset_targets = deepcopy(DEFAULT_TARGETS)
@@ -1058,7 +1087,7 @@ def render_targets_editor(targets: dict) -> None:
                 st.session_state[f"target_{nutrient_name}"] = reset_targets[group_name][nutrient_name]
         for field_name, value in reset_targets["calculator_profile"].items():
             st.session_state[f"calc_{field_name}"] = value
-        st.success("Les objectifs par défaut ont été restaurés.")
+        push_notice("Les objectifs par défaut ont été restaurés.", "targets_actions")
         st.rerun()
 
 
@@ -1073,6 +1102,7 @@ def render_saved_meals(foods: dict) -> None:
     )
     st.session_state.meal_name = save_name
 
+    render_notice("saved_meal_save")
     if st.button("Sauvegarder ce repas", type="primary"):
         if not save_name.strip():
             st.error("Donne un nom au repas avant de le sauvegarder.")
@@ -1080,7 +1110,8 @@ def render_saved_meals(foods: dict) -> None:
             st.error("Le repas courant est vide.")
         else:
             meal_path = save_meal(save_name.strip(), st.session_state.meal_items)
-            st.success(f"Repas sauvegardé dans {meal_path.name}.")
+            push_notice(f"Repas sauvegardé dans {meal_path.name}.", "saved_meal_save")
+            st.rerun()
 
     meals, meals_error = list_saved_meals()
     if meals_error:
@@ -1108,6 +1139,7 @@ def render_saved_meals(foods: dict) -> None:
 
     st.caption(f"Fichier : {selected_meal['path'].name}")
 
+    render_notice("saved_meal_load")
     if st.button("Charger ce repas"):
         loaded_items, load_error = load_meal_file(selected_meal["path"])
         if load_error:
@@ -1128,12 +1160,14 @@ def render_saved_meals(foods: dict) -> None:
 
         st.session_state.meal_name = selected_meal["name"]
         if missing_foods:
-            st.warning(
-                "Le repas a été chargé partiellement. Aliments absents de `food.json` : "
-                + ", ".join(missing_foods)
+            push_notice(
+                f"Repas '{selected_meal['name']}' chargé partiellement. Aliments absents de `food.json` : "
+                + ", ".join(missing_foods),
+                "saved_meal_load",
+                kind="warning",
             )
         else:
-            st.success("Repas chargé dans l'éditeur.")
+            push_notice(f"Repas chargé : {selected_meal['name']}.", "saved_meal_load")
         st.rerun()
 
 
@@ -1144,6 +1178,8 @@ def initialize_state(targets: dict) -> None:
         st.session_state.meal_items = {}
     if "meal_name" not in st.session_state:
         st.session_state.meal_name = ""
+    if "notice" not in st.session_state:
+        st.session_state.notice = None
     if "target_inputs" not in st.session_state:
         st.session_state.target_inputs = {}
         for group_name, config in NUTRIENT_GROUPS.items():
