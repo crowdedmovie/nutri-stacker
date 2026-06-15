@@ -82,6 +82,16 @@ def inject_styles() -> None:
             color: var(--text-color);
             margin-bottom: 0.75rem;
         }
+        .food-item-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.2rem;
+        }
+        .food-item-meta {
+            color: var(--muted-text);
+            font-size: 0.92rem;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -218,19 +228,11 @@ def render_meal_builder(foods: dict, targets: dict) -> None:
         if not selected_foods:
             st.info(t("meal_empty"))
         else:
+            st.markdown(f"#### {t('selected_foods')}")
             for food_name in selected_foods:
                 food_data = foods[food_name]
                 reference_quantity = food_data["Ref_Qte"]
                 reference_unit = food_data["Unite"]
-                st.markdown(
-                    (
-                        "<div class='food-summary'>"
-                        f"<strong>{food_label(food_name)}</strong><br>"
-                        f"{t('reference_label')} : {reference_quantity} {reference_unit}"
-                        "</div>"
-                    ),
-                    unsafe_allow_html=True,
-                )
                 quantity_key = f"qty_{food_name}"
                 if quantity_key not in st.session_state:
                     st.session_state[quantity_key] = st.session_state.meal_items.get(
@@ -238,14 +240,25 @@ def render_meal_builder(foods: dict, targets: dict) -> None:
                         get_default_quantity(food_name, foods),
                     )
 
-                quantity = st.number_input(
-                    t("quantity_for", food=food_label(food_name)),
-                    min_value=0.0,
-                    value=float(st.session_state[quantity_key]),
-                    step=1.0 if float(reference_quantity) == 1 else 10.0,
-                    key=quantity_key,
-                    help=t("quantity_help", unit=reference_unit),
-                )
+                with st.container(border=True):
+                    info_col, qty_col = st.columns([1.5, 1], gap="medium", vertical_alignment="center")
+                    with info_col:
+                        st.markdown(
+                            (
+                                f"<div class='food-item-title'>{food_label(food_name)}</div>"
+                                f"<div class='food-item-meta'>{t('reference_label')} : {reference_quantity} {reference_unit}</div>"
+                            ),
+                            unsafe_allow_html=True,
+                        )
+                    with qty_col:
+                        quantity = st.number_input(
+                            t("quantity_label"),
+                            min_value=0.0,
+                            value=float(st.session_state[quantity_key]),
+                            step=1.0 if float(reference_quantity) == 1 else 10.0,
+                            key=quantity_key,
+                            help=t("quantity_help", unit=reference_unit),
+                        )
                 st.session_state.meal_items[food_name] = float(quantity)
 
     macro_totals, micro_totals, details, missing_foods = calculate_totals(st.session_state.meal_items, foods)
