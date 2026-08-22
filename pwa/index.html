@@ -41,9 +41,10 @@
       // Local development uses two ports. Production uses one HTTPS origin and
       // routes the Streamlit app through /streamlit/ at the reverse proxy.
       const isLocalShell = window.location.port === "5500";
-      const streamlitUrl = isLocalShell
-        ? `${window.location.protocol}//${window.location.hostname}:8501/?embed=true`
-        : new URL("/streamlit/?embed=true", window.location.origin).toString();
+      const streamlitOrigin = isLocalShell
+        ? `${window.location.protocol}//${window.location.hostname}:8501`
+        : window.location.origin;
+      const streamlitUrl = new URL("/streamlit/?embed=true", streamlitOrigin).toString();
       document.getElementById("streamlit-frame").src = streamlitUrl;
 
       const offlineBanner = document.getElementById("offline-banner");

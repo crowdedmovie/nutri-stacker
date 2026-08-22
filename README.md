@@ -19,7 +19,7 @@ pip install -r requirements.txt
 streamlit run main.py
 ```
 
-The Streamlit app is available at `http://localhost:8501` by default.
+The Streamlit app is available at `http://localhost:8501/streamlit/` by default.
 
 ## Production architecture
 
@@ -45,7 +45,8 @@ The reverse proxy must:
 4. forward WebSocket connections for `/streamlit/`
 5. avoid caching Streamlit HTML, API, and WebSocket traffic
 
-Streamlit needs its production base path configured as `streamlit`:
+The repository includes [`.streamlit/config.toml`](.streamlit/config.toml), which
+configures the server for both local and production use:
 
 ```toml
 [server]
@@ -55,9 +56,9 @@ headless = true
 baseUrlPath = "streamlit"
 ```
 
-This can be provided through `.streamlit/config.toml`, environment variables,
-or command-line options. For a container deployment, the equivalent environment
-variable is:
+The `baseUrlPath` setting makes Streamlit available below `/streamlit/`, matching
+the reverse-proxy route and the PWA shell. If your deployment needs to override
+the file, the equivalent environment variable is:
 
 ```text
 STREAMLIT_SERVER_BASE_URL_PATH=streamlit
@@ -101,7 +102,8 @@ Open the shell from another device on the same network:
 http://<computer-ip>:5500
 ```
 
-The local shell automatically embeds Streamlit from port 8501.
+The local shell automatically embeds Streamlit from
+`http://<computer-ip>:8501/streamlit/`.
 
 ### Android install testing with ADB
 
