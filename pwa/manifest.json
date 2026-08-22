@@ -3,11 +3,13 @@
   "short_name": "Nutri Stacker",
   "description": "Build meals and review macro and micronutrient intake.",
   "start_url": "/",
+  "id": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#2e7d32",
   "background_color": "#f6f8f6",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icon.svg",

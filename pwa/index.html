@@ -38,11 +38,12 @@
       <iframe id="streamlit-frame" title="Nutri Stacker" allow="clipboard-read; clipboard-write"></iframe>
     </main>
     <script>
-      // The shell and Streamlit app are separate local processes during development.
-      // Keeping the target on the same host also works when this shell is later
-      // served behind a reverse proxy.
-      const streamlitPort = 8501;
-      const streamlitUrl = `${window.location.protocol}//${window.location.hostname}:${streamlitPort}/?embed=true`;
+      // Local development uses two ports. Production uses one HTTPS origin and
+      // routes the Streamlit app through /streamlit/ at the reverse proxy.
+      const isLocalShell = window.location.port === "5500";
+      const streamlitUrl = isLocalShell
+        ? `${window.location.protocol}//${window.location.hostname}:8501/?embed=true`
+        : new URL("/streamlit/?embed=true", window.location.origin).toString();
       document.getElementById("streamlit-frame").src = streamlitUrl;
 
       const offlineBanner = document.getElementById("offline-banner");

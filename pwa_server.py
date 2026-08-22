@@ -1,4 +1,9 @@
-"""Serve the local PWA shell while Streamlit runs on port 8501."""
+"""Serve the Nutri Stacker PWA shell.
+
+For local development this serves the shell on port 5500 while Streamlit runs
+on port 8501. In production, place this server behind an HTTPS reverse proxy
+and route the Streamlit application to the same host under /streamlit/.
+"""
 
 import argparse
 from functools import partial
