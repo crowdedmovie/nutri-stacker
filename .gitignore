@@ -6,6 +6,8 @@ venv/
 env/
 
 .streamlit/
+!.streamlit/
+!.streamlit/config.toml
 
 user_targets.json
 saved_meals/

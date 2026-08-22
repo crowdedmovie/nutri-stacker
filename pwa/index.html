@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#2e7d32" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <title>Nutri Stacker</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f6f8f6;
+      }
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+      body { background: #f6f8f6; }
+      .shell { width: 100%; height: 100%; display: flex; flex-direction: column; }
+      .offline-banner {
+        display: none;
+        padding: 8px 16px;
+        background: #fff3cd;
+        color: #664d03;
+        font-size: 13px;
+        text-align: center;
+      }
+      .offline-banner.visible { display: block; }
+      iframe { width: 100%; height: 100%; border: 0; flex: 1; background: #fff; }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <div id="offline-banner" class="offline-banner">You are offline. Nutri Stacker needs a server connection.</div>
+      <iframe id="streamlit-frame" title="Nutri Stacker" allow="clipboard-read; clipboard-write"></iframe>
+    </main>
+    <script>
+      // Local development uses two ports. Production uses one HTTPS origin and
+      // routes the Streamlit app through /streamlit/ at the reverse proxy.
+      const isLocalShell = window.location.port === "5500";
+      const streamlitOrigin = isLocalShell
+        ? `${window.location.protocol}//${window.location.hostname}:8501`
+        : window.location.origin;
+      const streamlitUrl = new URL("/streamlit/?embed=true", streamlitOrigin).toString();
+      document.getElementById("streamlit-frame").src = streamlitUrl;
+
+      const offlineBanner = document.getElementById("offline-banner");
+      const updateConnectionStatus = () => offlineBanner.classList.toggle("visible", !navigator.onLine);
+      window.addEventListener("online", updateConnectionStatus);
+      window.addEventListener("offline", updateConnectionStatus);
+      updateConnectionStatus();
+
+      if ("serviceWorker" in navigator && window.isSecureContext) {
+        navigator.serviceWorker.register("/sw.js").catch((error) => console.warn("Service worker registration failed", error));
+      }
+    </script>
+  </body>
+</html>
