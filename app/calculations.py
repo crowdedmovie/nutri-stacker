@@ -3,8 +3,6 @@ import re
 import unicodedata
 from copy import deepcopy
 
-import streamlit as st
-
 from app.config import (
     ACTIVITY_FACTORS,
     DEFAULT_TARGETS,
@@ -181,19 +179,24 @@ def get_default_quantity(food_name: str, foods: dict) -> float:
     return 1.0
 
 
-def sync_selected_foods(selected_foods: list[str], foods: dict) -> None:
-    current_items = st.session_state.meal_items
+def sync_selected_foods(selected_foods: list[str], foods: dict, state: dict) -> None:
+    """Keep the selected meal items in sync with the food picker.
+
+    ``state`` is supplied by the UI layer so the calculation module stays
+    independent from a particular frontend framework.
+    """
+    current_items = state["meal_items"]
 
     for food_name in list(current_items):
         if food_name not in selected_foods:
             current_items.pop(food_name, None)
-            st.session_state.pop(f"qty_{food_name}", None)
+            state.pop(f"qty_{food_name}", None)
 
     for food_name in selected_foods:
         if food_name not in current_items:
             default_quantity = get_default_quantity(food_name, foods)
             current_items[food_name] = default_quantity
-            st.session_state[f"qty_{food_name}"] = default_quantity
+            state[f"qty_{food_name}"] = default_quantity
 
 
 def calculate_totals(selected_items: dict[str, float], foods: dict) -> tuple[dict, dict, list[dict], list[str]]:

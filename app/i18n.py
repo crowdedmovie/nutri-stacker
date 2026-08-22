@@ -1,4 +1,7 @@
-import streamlit as st
+from contextvars import ContextVar
+
+
+_current_language: ContextVar[str] = ContextVar("nutri_stacker_language", default="fr")
 
 
 LANGUAGE_OPTIONS = {
@@ -486,11 +489,11 @@ FOOD_LABELS = {
 
 
 def get_lang() -> str:
-    return st.session_state.get("lang", "fr")
+    return _current_language.get()
 
 
 def set_lang(lang: str) -> None:
-    st.session_state.lang = lang if lang in LANGUAGE_OPTIONS else "fr"
+    _current_language.set(lang if lang in LANGUAGE_OPTIONS else "fr")
 
 
 def t(key: str, **kwargs) -> str:
