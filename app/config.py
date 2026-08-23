@@ -5,6 +5,7 @@ APP_DIR = Path(__file__).resolve().parent.parent
 FOOD_FILE = APP_DIR / "food.json"
 TARGETS_FILE = APP_DIR / "user_targets.json"
 PREFERENCES_FILE = APP_DIR / "user_preferences.json"
+LIVE_STATE_FILE = APP_DIR / "live_state.json"
 MEALS_DIR = APP_DIR / "saved_meals"
 
 MACRO_CONFIG = {

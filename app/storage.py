@@ -9,6 +9,7 @@ from app.config import (
     DEFAULT_TARGETS,
     FOOD_FILE,
     GOAL_MODES,
+    LIVE_STATE_FILE,
     MACRO_CONFIG,
     MEALS_DIR,
     MICRO_CONFIG,
@@ -131,6 +132,19 @@ def load_targets() -> tuple[dict, str | None]:
     return normalized, None
 
 
+def load_live_state() -> tuple[dict, str | None]:
+    try:
+        raw_state = read_json_file(LIVE_STATE_FILE)
+    except FileNotFoundError:
+        return {}, None
+    except json.JSONDecodeError as error:
+        return {}, t("live_state_invalid", error=error)
+
+    if not isinstance(raw_state, dict):
+        return {}, t("live_state_invalid", error=t("invalid_live_state_shape"))
+    return raw_state, None
+
+
 def load_favorite_foods() -> tuple[list[str], str | None]:
     try:
         raw_preferences = read_json_file(PREFERENCES_FILE)
@@ -205,6 +219,10 @@ def list_saved_meals() -> tuple[list[dict], str | None]:
 
 def save_targets(targets: dict) -> None:
     write_json_file(TARGETS_FILE, targets)
+
+
+def save_live_state(state: dict) -> None:
+    write_json_file(LIVE_STATE_FILE, state)
 
 
 def save_meal(name: str, items: dict[str, float]) -> Path:

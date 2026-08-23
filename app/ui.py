@@ -1,3 +1,4 @@
+import html
 import math
 from copy import deepcopy
 
@@ -31,7 +32,15 @@ from app.i18n import (
     strength_label,
     t,
 )
-from app.storage import list_saved_meals, load_meal_file, save_favorite_foods, save_meal, save_targets
+from app.storage import (
+    list_saved_meals,
+    load_meal_file,
+    normalize_targets,
+    save_favorite_foods,
+    save_live_state,
+    save_meal,
+    save_targets,
+)
 
 
 def inject_styles() -> None:
@@ -154,6 +163,35 @@ def inject_styles() -> None:
         .food-catalog-bottom-space {
             height: 0.25rem;
         }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.notice-success-marker) {
+            background: color-mix(in srgb, #16a34a 25%, var(--secondary-background-color));
+            border-color: color-mix(in srgb, #22c55e 45%, transparent);
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.notice-warning-marker) {
+            background: color-mix(in srgb, #d97706 24%, var(--secondary-background-color));
+            border-color: color-mix(in srgb, #f59e0b 45%, transparent);
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.notice-info-marker) {
+            background: color-mix(in srgb, #2563eb 22%, var(--secondary-background-color));
+            border-color: color-mix(in srgb, #60a5fa 42%, transparent);
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.notice-success-marker) button,
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.notice-warning-marker) button,
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.notice-info-marker) button {
+            border: 0;
+            background: transparent;
+            color: var(--text-color);
+            min-height: 2.25rem;
+            font-size: 1.15rem;
+        }
+        .notice-copy {
+            padding: 0.55rem 0.65rem;
+            color: var(--text-color);
+            line-height: 1.35;
+        }
+        .notice-marker {
+            display: none;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -234,18 +272,23 @@ def render_notice(scope: str) -> None:
     if not notice or notice.get("scope") != scope:
         return
 
-    message_col, close_col = st.columns([0.95, 0.05], vertical_alignment="center")
-    with message_col:
-        if notice["kind"] == "success":
-            st.success(notice["message"])
-        elif notice["kind"] == "warning":
-            st.warning(notice["message"])
-        else:
-            st.info(notice["message"])
-    with close_col:
-        if st.button("✕", key=f"close_notice_{scope}", help=t("close_message")):
-            st.session_state.notice = None
-            st.rerun()
+    notice_kind = notice.get("kind", "info")
+    if notice_kind not in {"success", "warning", "info"}:
+        notice_kind = "info"
+    safe_message = html.escape(str(notice.get("message", ""))).replace("\n", "<br>")
+
+    with st.container(border=True):
+        st.markdown(
+            f"<span class='notice-marker notice-{notice_kind}-marker'></span>",
+            unsafe_allow_html=True,
+        )
+        message_col, close_col = st.columns([0.94, 0.06], gap="small", vertical_alignment="center")
+        with message_col:
+            st.markdown(f"<div class='notice-copy'>{safe_message}</div>", unsafe_allow_html=True)
+        with close_col:
+            if st.button("✕", key=f"close_notice_{scope}", help=t("close_message")):
+                st.session_state.notice = None
+                rerun_with_live_state()
 
 
 def render_language_selector() -> None:
@@ -266,7 +309,7 @@ def render_language_selector() -> None:
         set_lang(selected)
         st.session_state.targets["app_settings"]["language"] = selected
         save_targets(st.session_state.targets)
-        st.rerun()
+        rerun_with_live_state()
 
 
 def render_macro_cards(macro_totals: dict, targets: dict) -> None:
@@ -382,7 +425,7 @@ def render_simple_food_selector(foods: dict) -> None:
         st.session_state.meal_items[food_name] = default_quantity
         st.session_state[f"qty_{food_name}"] = default_quantity
         st.session_state.simple_food_picker_reset = True
-        st.rerun()
+        rerun_with_live_state()
 
 
 def render_advanced_food_catalog(foods: dict) -> None:
@@ -428,7 +471,7 @@ def render_advanced_food_catalog(foods: dict) -> None:
         ):
             current_index = SORT_MODES.index(mode)
             st.session_state.food_sort_mode = SORT_MODES[(current_index + 1) % len(SORT_MODES)]
-            st.rerun()
+            rerun_with_live_state()
 
     favorite_foods = set(st.session_state.get("favorite_foods", []))
     displayed_foods = filter_and_sort_foods(
@@ -483,7 +526,7 @@ def render_advanced_food_catalog(foods: dict) -> None:
                             default_quantity = get_default_quantity(food_name, foods)
                             st.session_state.meal_items[food_name] = default_quantity
                             st.session_state[f"qty_{food_name}"] = default_quantity
-                            st.rerun()
+                            rerun_with_live_state()
                     with favorite_col:
                         if st.button(
                             "★" if is_favorite else "☆",
@@ -501,7 +544,7 @@ def render_advanced_food_catalog(foods: dict) -> None:
                             )
                             st.session_state.favorite_foods = updated_favorites
                             save_favorite_foods(updated_favorites)
-                            st.rerun()
+                            rerun_with_live_state()
                 st.markdown("<div class='food-catalog-bottom-space'></div>", unsafe_allow_html=True)
 
 
@@ -566,7 +609,7 @@ def render_meal_builder(foods: dict, targets: dict) -> None:
                         ):
                             st.session_state.meal_items.pop(food_name, None)
                             st.session_state.pop(quantity_key, None)
-                            st.rerun()
+                            rerun_with_live_state()
 
                     quantity = st.number_input(
                         t("quantity_label"),
@@ -625,6 +668,84 @@ def update_profile_from_inputs() -> None:
         "strength_intensity": st.session_state.calc_strength_intensity,
         "goal_mode": st.session_state.calc_goal_mode,
     }
+
+
+def build_live_state() -> dict:
+    targets = deepcopy(st.session_state.get("targets", DEFAULT_TARGETS))
+    target_inputs = st.session_state.get("target_inputs", {})
+
+    for group_name, config in NUTRIENT_GROUPS.items():
+        target_group = targets.setdefault(group_name, {})
+        for nutrient_name in config:
+            value = st.session_state.get(
+                f"target_{nutrient_name}",
+                target_inputs.get(nutrient_name, DEFAULT_TARGETS[group_name][nutrient_name]),
+            )
+            if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value)):
+                target_group[nutrient_name] = float(value)
+
+    profile = targets.setdefault("calculator_profile", {})
+    for field_name, default_value in DEFAULT_TARGETS["calculator_profile"].items():
+        value = st.session_state.get(f"calc_{field_name}", profile.get(field_name, default_value))
+        if isinstance(default_value, str):
+            if isinstance(value, str):
+                profile[field_name] = value
+        elif isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value)):
+            profile[field_name] = int(value) if isinstance(default_value, int) else float(value)
+
+    meal_items = {}
+    for food_name, quantity in st.session_state.get("meal_items", {}).items():
+        if isinstance(food_name, str) and isinstance(quantity, (int, float)) and not isinstance(quantity, bool):
+            if math.isfinite(float(quantity)):
+                meal_items[food_name] = float(quantity)
+
+    return {
+        "meal": {
+            "name": str(st.session_state.get("meal_name", "")),
+            "items": meal_items,
+        },
+        "targets": targets,
+    }
+
+
+def persist_live_state() -> None:
+    save_live_state(build_live_state())
+
+
+def rerun_with_live_state() -> None:
+    persist_live_state()
+    st.rerun()
+
+
+def restore_targets_from_live_state(targets: dict, live_state: dict | None) -> dict:
+    if not isinstance(live_state, dict) or not isinstance(live_state.get("targets"), dict):
+        return deepcopy(targets)
+
+    merged_targets = deepcopy(targets)
+    snapshot_targets = live_state["targets"]
+    for group_name, config in NUTRIENT_GROUPS.items():
+        snapshot_group = snapshot_targets.get(group_name, {})
+        if not isinstance(snapshot_group, dict):
+            continue
+        for nutrient_name in config:
+            value = snapshot_group.get(nutrient_name)
+            if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value)):
+                merged_targets[group_name][nutrient_name] = float(value)
+
+    snapshot_profile = snapshot_targets.get("calculator_profile", {})
+    if isinstance(snapshot_profile, dict):
+        for field_name, default_value in DEFAULT_TARGETS["calculator_profile"].items():
+            value = snapshot_profile.get(field_name)
+            if isinstance(default_value, str) and isinstance(value, str):
+                merged_targets["calculator_profile"][field_name] = value
+            elif isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value)):
+                merged_targets["calculator_profile"][field_name] = value
+
+    snapshot_settings = snapshot_targets.get("app_settings", {})
+    if isinstance(snapshot_settings, dict) and snapshot_settings.get("language") in {"fr", "en"}:
+        merged_targets["app_settings"]["language"] = snapshot_settings["language"]
+
+    return normalize_targets(merged_targets)
 
 
 def missing_target_values() -> list[str]:
@@ -807,7 +928,7 @@ def render_energy_calculator() -> dict:
     if st.button(t("apply_reco")):
         apply_recommended_targets(recommendation)
         push_notice(t("applied_reco_notice"), "targets_reco")
-        st.rerun()
+        rerun_with_live_state()
 
     return recommendation
 
@@ -870,7 +991,7 @@ def render_saved_meals(foods: dict) -> None:
         else:
             meal_path = save_meal(save_name.strip(), st.session_state.meal_items)
             push_notice(t("meal_saved", filename=meal_path.name), "saved_meal_save")
-            st.rerun()
+            rerun_with_live_state()
 
     meals, meals_error = list_saved_meals()
     if meals_error:
@@ -922,11 +1043,16 @@ def render_saved_meals(foods: dict) -> None:
             )
         else:
             push_notice(t("meal_loaded", name=selected_meal["name"]), "saved_meal_load")
-        st.rerun()
+        rerun_with_live_state()
 
 
-def initialize_state(targets: dict, favorite_foods: list[str] | None = None) -> None:
+def initialize_state(
+    targets: dict,
+    favorite_foods: list[str] | None = None,
+    live_state: dict | None = None,
+) -> None:
     favorite_foods = favorite_foods or []
+    targets = restore_targets_from_live_state(targets, live_state)
     persisted_lang = targets.get("app_settings", {}).get("language", "fr")
     if "lang" not in st.session_state:
         st.session_state.lang = persisted_lang
@@ -934,10 +1060,23 @@ def initialize_state(targets: dict, favorite_foods: list[str] | None = None) -> 
         st.session_state.targets = deepcopy(targets)
     else:
         st.session_state.targets["app_settings"] = deepcopy(targets.get("app_settings", DEFAULT_TARGETS["app_settings"]))
+    live_meal = live_state.get("meal", {}) if isinstance(live_state, dict) else {}
+    live_items = live_meal.get("items", {}) if isinstance(live_meal, dict) else {}
+    restored_items = {}
+    if isinstance(live_items, dict):
+        for food_name, quantity in live_items.items():
+            if isinstance(food_name, str) and isinstance(quantity, (int, float)) and not isinstance(quantity, bool):
+                if math.isfinite(float(quantity)):
+                    restored_items[food_name] = float(quantity)
+
     if "meal_items" not in st.session_state:
-        st.session_state.meal_items = {}
+        st.session_state.meal_items = restored_items
+        for food_name, quantity in restored_items.items():
+            st.session_state[f"qty_{food_name}"] = quantity
     if "meal_name" not in st.session_state:
-        st.session_state.meal_name = ""
+        st.session_state.meal_name = live_meal.get("name", "") if isinstance(live_meal, dict) else ""
+        if not isinstance(st.session_state.meal_name, str):
+            st.session_state.meal_name = ""
     if "notice" not in st.session_state:
         st.session_state.notice = None
     if "favorite_foods" not in st.session_state:

@@ -1,6 +1,6 @@
 import streamlit as st
 
-from app.storage import ensure_storage, load_favorite_foods, load_foods, load_targets
+from app.storage import ensure_storage, load_favorite_foods, load_foods, load_live_state, load_targets
 from app.ui import (
     initialize_state,
     inject_styles,
@@ -8,6 +8,7 @@ from app.ui import (
     render_meal_builder,
     render_saved_meals,
     render_targets_editor,
+    persist_live_state,
 )
 from app.i18n import t
 
@@ -26,9 +27,10 @@ def main() -> None:
 
     foods, foods_error = load_foods()
     targets, targets_error = load_targets()
+    live_state, live_state_error = load_live_state()
     favorite_foods, favorites_error = load_favorite_foods()
 
-    initialize_state(targets, favorite_foods)
+    initialize_state(targets, favorite_foods, live_state)
     render_language_selector()
 
     st.title(t("app_title"))
@@ -39,6 +41,8 @@ def main() -> None:
         st.stop()
     if targets_error:
         st.warning(targets_error)
+    if live_state_error:
+        st.warning(live_state_error)
     if favorites_error:
         st.warning(favorites_error)
 
@@ -52,6 +56,8 @@ def main() -> None:
 
     with tab_saved_meals:
         render_saved_meals(foods)
+
+    persist_live_state()
 
 
 if __name__ == "__main__":
