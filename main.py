@@ -1,6 +1,6 @@
 import streamlit as st
 
-from app.storage import ensure_storage, load_foods, load_targets
+from app.storage import ensure_storage, load_favorite_foods, load_foods, load_targets
 from app.ui import (
     initialize_state,
     inject_styles,
@@ -26,8 +26,9 @@ def main() -> None:
 
     foods, foods_error = load_foods()
     targets, targets_error = load_targets()
+    favorite_foods, favorites_error = load_favorite_foods()
 
-    initialize_state(targets)
+    initialize_state(targets, favorite_foods)
     render_language_selector()
 
     st.title(t("app_title"))
@@ -38,6 +39,8 @@ def main() -> None:
         st.stop()
     if targets_error:
         st.warning(targets_error)
+    if favorites_error:
+        st.warning(favorites_error)
 
     tab_meal, tab_targets, tab_saved_meals = st.tabs([t("tab_meal"), t("tab_targets"), t("tab_saved_meals")])
 

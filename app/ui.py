@@ -1,13 +1,11 @@
 from copy import deepcopy
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 from app.calculations import (
     calculate_recommended_targets,
     calculate_totals,
     get_default_quantity,
-    sync_selected_foods,
 )
 from app.config import (
     ACTIVITY_FACTORS,
@@ -18,6 +16,7 @@ from app.config import (
     NUTRIENT_GROUPS,
     STRENGTH_INTENSITIES,
 )
+from app.food_catalog import SORT_MODES, filter_and_sort_foods, get_nutrient_value
 from app.i18n import (
     LANGUAGE_OPTIONS,
     activity_description,
@@ -30,7 +29,7 @@ from app.i18n import (
     strength_label,
     t,
 )
-from app.storage import list_saved_meals, load_meal_file, save_meal, save_targets
+from app.storage import list_saved_meals, load_meal_file, save_favorite_foods, save_meal, save_targets
 
 
 def inject_styles() -> None:
@@ -138,52 +137,20 @@ def inject_styles() -> None:
             font-weight: 600;
             white-space: nowrap;
         }
+        .food-catalog-meta {
+            color: var(--muted-text);
+            font-size: 0.88rem;
+            line-height: 1.35;
+        }
+        .food-catalog-name {
+            color: var(--text-color);
+            font-size: 0.98rem;
+            font-weight: 700;
+            margin-bottom: 0.15rem;
+        }
         </style>
         """,
         unsafe_allow_html=True,
-    )
-
-
-def inject_multiselect_keyboard_guard() -> None:
-    components.html(
-        """
-        <script>
-        const doc = window.parent.document;
-        if (!doc.__nutriStackerMultiSelectGuard) {
-            doc.__nutriStackerMultiSelectGuard = true;
-            doc.addEventListener("keydown", function(event) {
-                const isDeleteKey = event.key === "Backspace" || event.key === "Delete";
-                if (!isDeleteKey) {
-                    return;
-                }
-
-                const active = doc.activeElement;
-                if (!active) {
-                    return;
-                }
-
-                const multiSelect = active.closest('div[data-testid="stMultiSelect"]');
-                if (!multiSelect) {
-                    return;
-                }
-
-                const currentValue = typeof active.value === "string" ? active.value : "";
-                const hasSelectionRange =
-                    typeof active.selectionStart === "number" &&
-                    typeof active.selectionEnd === "number" &&
-                    active.selectionStart !== active.selectionEnd;
-
-                if (currentValue.length > 0 || hasSelectionRange) {
-                    return;
-                }
-
-                event.preventDefault();
-                event.stopPropagation();
-            }, true);
-        }
-        </script>
-        """,
-        height=0,
     )
 
 
@@ -326,34 +293,128 @@ def render_food_breakdown(detail: dict) -> None:
     st.markdown(f"<div class='food-micro-grid'>{''.join(micro_items)}</div>", unsafe_allow_html=True)
 
 
+def render_food_catalog(foods: dict) -> None:
+    st.markdown(f"#### {t('food_catalog_title')}")
+    st.caption(t("food_catalog_intro"))
+
+    food_to_display = {food_name: food_label(food_name) for food_name in foods}
+    nutrient_options = [*MACRO_CONFIG, *MICRO_CONFIG]
+    if st.session_state.get("food_sort_nutrient") not in nutrient_options:
+        st.session_state.food_sort_nutrient = nutrient_options[0]
+    if st.session_state.get("food_sort_mode") not in SORT_MODES:
+        st.session_state.food_sort_mode = SORT_MODES[0]
+
+    search_col, nutrient_col = st.columns([1.3, 1], gap="medium")
+    with search_col:
+        search_query = st.text_input(
+            t("food_search_label"),
+            placeholder=t("foods_placeholder"),
+            key="food_search_query",
+        )
+    with nutrient_col:
+        nutrient_name = st.selectbox(
+            t("food_sort_criterion"),
+            options=nutrient_options,
+            format_func=nutrient_label,
+            key="food_sort_nutrient",
+        )
+
+    filter_col, sort_col = st.columns([1.3, 1], gap="medium", vertical_alignment="center")
+    with filter_col:
+        favorites_only = st.checkbox(t("food_favorites_only"), key="food_favorites_only")
+    with sort_col:
+        mode = st.session_state.food_sort_mode
+        mode_key = {
+            "alpha": "food_sort_mode_alpha",
+            "asc": "food_sort_mode_asc",
+            "desc": "food_sort_mode_desc",
+        }[mode]
+        if st.button(
+            t("food_sort_button", mode=t(mode_key)),
+            help=t("food_sort_button_help"),
+            key="food_sort_mode_button",
+            use_container_width=True,
+        ):
+            current_index = SORT_MODES.index(mode)
+            st.session_state.food_sort_mode = SORT_MODES[(current_index + 1) % len(SORT_MODES)]
+            st.rerun()
+
+    favorite_foods = set(st.session_state.get("favorite_foods", []))
+    displayed_foods = filter_and_sort_foods(
+        foods,
+        food_to_display,
+        search_query,
+        favorite_foods,
+        favorites_only,
+        nutrient_name,
+        st.session_state.food_sort_mode,
+    )
+
+    if not displayed_foods:
+        if favorites_only and not any(food_name in foods for food_name in favorite_foods):
+            st.info(t("food_no_favorites"))
+        else:
+            st.info(t("food_no_results"))
+        return
+
+    st.caption(t("food_results_count", count=len(displayed_foods)))
+    for food_name in displayed_foods:
+        food_data = foods[food_name]
+        nutrient_value = get_nutrient_value(food_data, nutrient_name)
+        nutrient_config = {**MACRO_CONFIG, **MICRO_CONFIG}[nutrient_name]
+        is_selected = food_name in st.session_state.meal_items
+        is_favorite = food_name in favorite_foods
+
+        with st.container(border=True):
+            info_col, meal_col, favorite_col = st.columns([4.4, 1.1, 0.55], vertical_alignment="center")
+            with info_col:
+                st.markdown(
+                    (
+                        f"<div class='food-catalog-name'>{food_to_display[food_name]}</div>"
+                        f"<div class='food-catalog-meta'>{t('reference_label')} : "
+                        f"{food_data['Ref_Qte']} {food_data['Unite']}<br>"
+                        f"{t('food_value_reference', value=format_number(nutrient_value), unit=nutrient_config['unit'], quantity=food_data['Ref_Qte'], reference_unit=food_data['Unite'])}</div>"
+                    ),
+                    unsafe_allow_html=True,
+                )
+            with meal_col:
+                if st.button(
+                    t("food_remove") if is_selected else t("food_add"),
+                    key=f"food_meal_toggle_{food_name}",
+                ):
+                    if is_selected:
+                        st.session_state.meal_items.pop(food_name, None)
+                        st.session_state.pop(f"qty_{food_name}", None)
+                    else:
+                        default_quantity = get_default_quantity(food_name, foods)
+                        st.session_state.meal_items[food_name] = default_quantity
+                        st.session_state[f"qty_{food_name}"] = default_quantity
+                    st.rerun()
+            with favorite_col:
+                if st.button(
+                    "★" if is_favorite else "☆",
+                    key=f"food_favorite_toggle_{food_name}",
+                    help=t("food_favorite_remove" if is_favorite else "food_favorite_add"),
+                ):
+                    if is_favorite:
+                        favorite_foods.remove(food_name)
+                    else:
+                        favorite_foods.add(food_name)
+                    updated_favorites = sorted(favorite_foods, key=lambda name: food_to_display.get(name, name).casefold())
+                    st.session_state.favorite_foods = updated_favorites
+                    save_favorite_foods(updated_favorites)
+                    st.rerun()
+
+
 def render_meal_builder(foods: dict, targets: dict) -> None:
     st.subheader(t("meal_subheader"))
     col_input, col_results = st.columns([1.05, 1.35], gap="large")
 
-    st.write(t("meal_intro"))
-    inject_multiselect_keyboard_guard()
-    food_to_display = {food_name: food_label(food_name) for food_name in foods}
-    display_to_food = {display_name: food_name for food_name, display_name in food_to_display.items()}
-    pending_display_names = st.session_state.pop("pending_selected_food_display_names", None)
-    if pending_display_names is not None:
-        st.session_state.selected_food_display_names = pending_display_names
-    if "selected_food_display_names" not in st.session_state:
-        st.session_state.selected_food_display_names = [
-            food_to_display[food_name]
-            for food_name in st.session_state.meal_items.keys()
-            if food_name in food_to_display
-        ]
-
     with col_input:
-        selected_display_names = st.multiselect(
-            t("foods_label"),
-            options=sorted(display_to_food.keys()),
-            placeholder=t("foods_placeholder"),
-            key="selected_food_display_names",
-        )
+        st.write(t("meal_intro"))
+        render_food_catalog(foods)
 
-    selected_foods = [display_to_food[display_name] for display_name in selected_display_names]
-    sync_selected_foods(selected_foods, foods)
+    selected_foods = [food_name for food_name in st.session_state.meal_items if food_name in foods]
     macro_totals, micro_totals, details, missing_foods = calculate_totals(st.session_state.meal_items, foods)
 
     with col_input:
@@ -386,7 +447,6 @@ def render_meal_builder(foods: dict, targets: dict) -> None:
                         quantity = st.number_input(
                             t("quantity_label"),
                             min_value=0.0,
-                            value=float(st.session_state[quantity_key]),
                             step=1.0 if float(reference_quantity) == 1 else 10.0,
                             key=quantity_key,
                             help=t("quantity_help", unit=reference_unit),
@@ -677,9 +737,6 @@ def render_saved_meals(foods: dict) -> None:
             for food_name, quantity in loaded_items.items()
             if food_name in foods
         }
-        st.session_state.pending_selected_food_display_names = [
-            food_label(food_name) for food_name in st.session_state.meal_items.keys()
-        ]
         for key in list(st.session_state.keys()):
             if key.startswith("qty_"):
                 st.session_state.pop(key)
@@ -698,7 +755,8 @@ def render_saved_meals(foods: dict) -> None:
         st.rerun()
 
 
-def initialize_state(targets: dict) -> None:
+def initialize_state(targets: dict, favorite_foods: list[str] | None = None) -> None:
+    favorite_foods = favorite_foods or []
     persisted_lang = targets.get("app_settings", {}).get("language", "fr")
     if "lang" not in st.session_state:
         st.session_state.lang = persisted_lang
@@ -708,14 +766,20 @@ def initialize_state(targets: dict) -> None:
         st.session_state.targets["app_settings"] = deepcopy(targets.get("app_settings", DEFAULT_TARGETS["app_settings"]))
     if "meal_items" not in st.session_state:
         st.session_state.meal_items = {}
-    if "selected_food_display_names" not in st.session_state:
-        st.session_state.selected_food_display_names = []
-    if "pending_selected_food_display_names" not in st.session_state:
-        st.session_state.pending_selected_food_display_names = None
     if "meal_name" not in st.session_state:
         st.session_state.meal_name = ""
     if "notice" not in st.session_state:
         st.session_state.notice = None
+    if "favorite_foods" not in st.session_state:
+        st.session_state.favorite_foods = list(favorite_foods)
+    if "food_search_query" not in st.session_state:
+        st.session_state.food_search_query = ""
+    if "food_favorites_only" not in st.session_state:
+        st.session_state.food_favorites_only = False
+    if "food_sort_nutrient" not in st.session_state:
+        st.session_state.food_sort_nutrient = next(iter(MACRO_CONFIG))
+    if "food_sort_mode" not in st.session_state:
+        st.session_state.food_sort_mode = "alpha"
     if "target_inputs" not in st.session_state:
         st.session_state.target_inputs = {}
         for group_name, config in NUTRIENT_GROUPS.items():

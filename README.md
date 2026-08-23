@@ -6,6 +6,7 @@ The application:
 
 - loads food data from `food.json`
 - calculates meal macros and micronutrients
+- provides typo-tolerant food search, favorites, and nutrition-based sorting
 - lets users define and save nutrition targets
 - saves and reloads meals as JSON files
 - provides an installable PWA shell for Android and desktop browsers
@@ -131,6 +132,7 @@ For production, use the HTTPS domain handled by the reverse proxy.
 - `app/`: application UI, storage, translations, configuration, and calculations
 - `food.json`: food and nutrient database
 - `user_targets.json`: locally persisted nutrition targets
+- `user_preferences.json`: locally persisted food favorites and preferences
 - `saved_meals/`: locally persisted meal files
 - `pwa/index.html`: installable shell that embeds Streamlit
 - `pwa/manifest.json`: PWA installation metadata
