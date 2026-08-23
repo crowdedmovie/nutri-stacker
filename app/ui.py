@@ -164,15 +164,19 @@ def inject_instant_food_search() -> None:
         """
         <script>
         const doc = window.parent.document;
-        if (doc.__nutriStackerInstantFoodSearchHandler) {
-            doc.removeEventListener("input", doc.__nutriStackerInstantFoodSearchHandler, true);
+        if (doc.__nutriStackerInstantFoodSearchObserver) {
+            doc.__nutriStackerInstantFoodSearchObserver.disconnect();
         }
+        const previousHandler = doc.__nutriStackerInstantFoodSearchHandler;
+        if (previousHandler) {
+            doc.querySelectorAll('input[data-testid="stTextInputField"]').forEach(function(input) {
+                input.removeEventListener("input", previousHandler);
+                input.__nutriStackerInstantSearchAttached = false;
+            });
+        }
+
         const instantFoodSearchHandler = function(event) {
             const input = event.target;
-            if (!input || input.tagName !== "INPUT" || input.type !== "search") {
-                return;
-            }
-
             window.clearTimeout(input.__nutriStackerSearchTimer);
             input.__nutriStackerSearchTimer = window.setTimeout(function() {
                 if (!input.isConnected) {
@@ -190,7 +194,21 @@ def inject_instant_food_search() -> None:
                 }));
             }, 120);
         };
-        doc.addEventListener("input", instantFoodSearchHandler, true);
+
+        const attachInstantSearch = function() {
+            doc.querySelectorAll('input[data-testid="stTextInputField"][type="search"]').forEach(function(input) {
+                if (input.__nutriStackerInstantSearchAttached) {
+                    return;
+                }
+                input.addEventListener("input", instantFoodSearchHandler);
+                input.__nutriStackerInstantSearchAttached = true;
+            });
+        };
+
+        const instantFoodSearchObserver = new MutationObserver(attachInstantSearch);
+        instantFoodSearchObserver.observe(doc.body, {childList: true, subtree: true});
+        attachInstantSearch();
+        doc.__nutriStackerInstantFoodSearchObserver = instantFoodSearchObserver;
         doc.__nutriStackerInstantFoodSearchHandler = instantFoodSearchHandler;
         </script>
         """,
