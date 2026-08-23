@@ -163,34 +163,86 @@ def inject_styles() -> None:
         .food-catalog-bottom-space {
             height: 0.25rem;
         }
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.notice-success-marker) {
-            background: color-mix(in srgb, #16a34a 25%, var(--secondary-background-color));
-            border-color: color-mix(in srgb, #22c55e 45%, transparent);
+        .st-key-notice-success {
+            background: rgba(34, 197, 94, 0.22) !important;
+            border: 1px solid rgba(74, 222, 128, 0.55) !important;
+            border-radius: 0.55rem;
+            padding: 0.65rem 0.8rem !important;
         }
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.notice-warning-marker) {
-            background: color-mix(in srgb, #d97706 24%, var(--secondary-background-color));
-            border-color: color-mix(in srgb, #f59e0b 45%, transparent);
+        .st-key-notice-warning {
+            background: rgba(245, 158, 11, 0.2) !important;
+            border: 1px solid rgba(251, 191, 36, 0.55) !important;
+            border-radius: 0.55rem;
+            padding: 0.65rem 0.8rem !important;
         }
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.notice-info-marker) {
-            background: color-mix(in srgb, #2563eb 22%, var(--secondary-background-color));
-            border-color: color-mix(in srgb, #60a5fa 42%, transparent);
+        .st-key-notice-info {
+            background: rgba(59, 130, 246, 0.2) !important;
+            border: 1px solid rgba(96, 165, 250, 0.52) !important;
+            border-radius: 0.55rem;
+            padding: 0.65rem 0.8rem !important;
         }
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.notice-success-marker) button,
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.notice-warning-marker) button,
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.notice-info-marker) button {
+        .st-key-notice-success > div,
+        .st-key-notice-warning > div,
+        .st-key-notice-info > div {
+            background: transparent !important;
+        }
+        .st-key-notice-success [data-testid="stHorizontalBlock"],
+        .st-key-notice-warning [data-testid="stHorizontalBlock"],
+        .st-key-notice-info [data-testid="stHorizontalBlock"] {
+            align-items: stretch !important;
+        }
+        .st-key-notice-success [data-testid="stColumn"],
+        .st-key-notice-warning [data-testid="stColumn"],
+        .st-key-notice-info [data-testid="stColumn"] {
+            align-self: stretch !important;
+        }
+        .st-key-notice-success [data-testid="stColumn"] > [data-testid="stVerticalBlock"],
+        .st-key-notice-warning [data-testid="stColumn"] > [data-testid="stVerticalBlock"],
+        .st-key-notice-info [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
+            height: 100% !important;
+            justify-content: center !important;
+        }
+        .st-key-notice-success button,
+        .st-key-notice-warning button,
+        .st-key-notice-info button {
             border: 0;
             background: transparent;
             color: var(--text-color);
             min-height: 2.25rem;
             font-size: 1.15rem;
         }
-        .notice-copy {
-            padding: 0.55rem 0.65rem;
-            color: var(--text-color);
-            line-height: 1.35;
+        .st-key-notice-success [data-testid="stButton"],
+        .st-key-notice-warning [data-testid="stButton"],
+        .st-key-notice-info [data-testid="stButton"] {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
         }
-        .notice-marker {
-            display: none;
+        .st-key-notice-success [data-testid="stButton"] > button,
+        .st-key-notice-warning [data-testid="stButton"] > button,
+        .st-key-notice-info [data-testid="stButton"] > button {
+            margin: 0 auto;
+        }
+        .st-key-notice-success [data-testid="stMarkdownContainer"],
+        .st-key-notice-warning [data-testid="stMarkdownContainer"],
+        .st-key-notice-info [data-testid="stMarkdownContainer"] {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .st-key-notice-success [data-testid="stMarkdownContainer"] p,
+        .st-key-notice-warning [data-testid="stMarkdownContainer"] p,
+        .st-key-notice-info [data-testid="stMarkdownContainer"] p {
+            margin: 0 !important;
+        }
+        .notice-copy {
+            display: flex;
+            align-items: center;
+            height: 2.25rem;
+            min-height: 2.25rem;
+            padding: 0 0.65rem;
+            color: var(--text-color);
+            line-height: 1.2;
         }
         </style>
         """,
@@ -277,11 +329,7 @@ def render_notice(scope: str) -> None:
         notice_kind = "info"
     safe_message = html.escape(str(notice.get("message", ""))).replace("\n", "<br>")
 
-    with st.container(border=True):
-        st.markdown(
-            f"<span class='notice-marker notice-{notice_kind}-marker'></span>",
-            unsafe_allow_html=True,
-        )
+    with st.container(border=False, key=f"notice-{notice_kind}"):
         message_col, close_col = st.columns([0.94, 0.06], gap="small", vertical_alignment="center")
         with message_col:
             st.markdown(f"<div class='notice-copy'>{safe_message}</div>", unsafe_allow_html=True)
