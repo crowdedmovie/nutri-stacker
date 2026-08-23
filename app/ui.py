@@ -164,29 +164,34 @@ def inject_instant_food_search() -> None:
         """
         <script>
         const doc = window.parent.document;
-        if (!doc.__nutriStackerInstantFoodSearch) {
-            doc.__nutriStackerInstantFoodSearch = true;
-            doc.addEventListener("input", function(event) {
-                const input = event.target;
-                if (!input || input.tagName !== "INPUT" || input.type !== "search") {
+        if (doc.__nutriStackerInstantFoodSearchHandler) {
+            doc.removeEventListener("input", doc.__nutriStackerInstantFoodSearchHandler, true);
+        }
+        const instantFoodSearchHandler = function(event) {
+            const input = event.target;
+            if (!input || input.tagName !== "INPUT" || input.type !== "search") {
+                return;
+            }
+
+            window.clearTimeout(input.__nutriStackerSearchTimer);
+            input.__nutriStackerSearchTimer = window.setTimeout(function() {
+                if (!input.isConnected) {
                     return;
                 }
-
-                window.clearTimeout(input.__nutriStackerSearchTimer);
-                input.__nutriStackerSearchTimer = window.setTimeout(function() {
-                    if (doc.activeElement !== input) {
-                        return;
-                    }
-                    input.dispatchEvent(new KeyboardEvent("keydown", {
-                        key: "Enter",
-                        code: "Enter",
-                        keyCode: 13,
-                        which: 13,
-                        bubbles: true,
-                    }));
-                }, 120);
-            }, true);
-        }
+                const eventWindow = doc.defaultView || window;
+                input.dispatchEvent(new eventWindow.Event("change", {bubbles: true}));
+                input.dispatchEvent(new eventWindow.KeyboardEvent("keydown", {
+                    key: "Enter",
+                    code: "Enter",
+                    keyCode: 13,
+                    which: 13,
+                    bubbles: true,
+                    cancelable: true,
+                }));
+            }, 120);
+        };
+        doc.addEventListener("input", instantFoodSearchHandler, true);
+        doc.__nutriStackerInstantFoodSearchHandler = instantFoodSearchHandler;
         </script>
         """,
         height=0,
