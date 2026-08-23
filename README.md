@@ -6,7 +6,7 @@ The application:
 
 - loads food data from `food.json`
 - calculates meal macros and micronutrients
-- provides typo-tolerant food search, favorites, and nutrition-based sorting
+- provides simple food selection plus advanced typo-tolerant search, favorites, and nutrition-based sorting
 - lets users define and save nutrition targets
 - saves and reloads meals as JSON files
 - provides an installable PWA shell for Android and desktop browsers

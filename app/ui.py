@@ -1,11 +1,13 @@
 from copy import deepcopy
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from app.calculations import (
     calculate_recommended_targets,
     calculate_totals,
     get_default_quantity,
+    sync_selected_foods,
 )
 from app.config import (
     ACTIVITY_FACTORS,
@@ -141,6 +143,7 @@ def inject_styles() -> None:
             color: var(--muted-text);
             font-size: 0.88rem;
             line-height: 1.35;
+            padding-bottom: 0.25rem;
         }
         .food-catalog-name {
             color: var(--text-color);
@@ -148,9 +151,89 @@ def inject_styles() -> None:
             font-weight: 700;
             margin-bottom: 0.15rem;
         }
+        .food-catalog-bottom-space {
+            height: 0.25rem;
+        }
         </style>
         """,
         unsafe_allow_html=True,
+    )
+
+
+def inject_multiselect_keyboard_guard() -> None:
+    components.html(
+        """
+        <script>
+        const doc = window.parent.document;
+        if (!doc.__nutriStackerMultiSelectGuard) {
+            doc.__nutriStackerMultiSelectGuard = true;
+            doc.addEventListener("keydown", function(event) {
+                const isDeleteKey = event.key === "Backspace" || event.key === "Delete";
+                if (!isDeleteKey) {
+                    return;
+                }
+
+                const active = doc.activeElement;
+                if (!active) {
+                    return;
+                }
+
+                const multiSelect = active.closest('div[data-testid="stMultiSelect"]');
+                if (!multiSelect) {
+                    return;
+                }
+
+                const currentValue = typeof active.value === "string" ? active.value : "";
+                const hasSelectionRange =
+                    typeof active.selectionStart === "number" &&
+                    typeof active.selectionEnd === "number" &&
+                    active.selectionStart !== active.selectionEnd;
+
+                if (currentValue.length > 0 || hasSelectionRange) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+            }, true);
+        }
+        </script>
+        """,
+        height=0,
+    )
+
+
+def inject_instant_food_search() -> None:
+    components.html(
+        """
+        <script>
+        const doc = window.parent.document;
+        if (!doc.__nutriStackerInstantFoodSearch) {
+            doc.__nutriStackerInstantFoodSearch = true;
+            doc.addEventListener("input", function(event) {
+                const input = event.target;
+                if (!input || input.tagName !== "INPUT" || input.type !== "search") {
+                    return;
+                }
+
+                window.clearTimeout(input.__nutriStackerSearchTimer);
+                input.__nutriStackerSearchTimer = window.setTimeout(function() {
+                    if (doc.activeElement !== input) {
+                        return;
+                    }
+                    input.dispatchEvent(new KeyboardEvent("keydown", {
+                        key: "Enter",
+                        code: "Enter",
+                        keyCode: 13,
+                        which: 13,
+                        bubbles: true,
+                    }));
+                }, 120);
+            }, true);
+        }
+        </script>
+        """,
+        height=0,
     )
 
 
@@ -293,10 +376,32 @@ def render_food_breakdown(detail: dict) -> None:
     st.markdown(f"<div class='food-micro-grid'>{''.join(micro_items)}</div>", unsafe_allow_html=True)
 
 
-def render_food_catalog(foods: dict) -> None:
-    st.markdown(f"#### {t('food_catalog_title')}")
-    st.caption(t("food_catalog_intro"))
+def render_simple_food_selector(foods: dict) -> None:
+    food_to_display = {food_name: food_label(food_name) for food_name in foods}
+    pending_display_names = st.session_state.pop("pending_selected_food_display_names", None)
+    if pending_display_names is not None:
+        st.session_state.selected_food_display_names = pending_display_names
+    elif st.session_state.get("food_search_last_mode") != "simple":
+        st.session_state.selected_food_display_names = [
+            food_to_display[food_name]
+            for food_name in st.session_state.meal_items
+            if food_name in food_to_display
+        ]
+    if "selected_food_display_names" not in st.session_state:
+        st.session_state.selected_food_display_names = []
 
+    inject_multiselect_keyboard_guard()
+    selected_display_names = st.multiselect(
+        t("foods_label"),
+        options=sorted(food_to_display.values()),
+        placeholder=t("foods_placeholder"),
+        key="selected_food_display_names",
+    )
+    display_to_food = {display_name: food_name for food_name, display_name in food_to_display.items()}
+    sync_selected_foods([display_to_food[name] for name in selected_display_names], foods)
+
+
+def render_advanced_food_catalog(foods: dict) -> None:
     food_to_display = {food_name: food_label(food_name) for food_name in foods}
     nutrient_options = [*MACRO_CONFIG, *MICRO_CONFIG]
     if st.session_state.get("food_sort_nutrient") not in nutrient_options:
@@ -309,8 +414,10 @@ def render_food_catalog(foods: dict) -> None:
         search_query = st.text_input(
             t("food_search_label"),
             placeholder=t("foods_placeholder"),
+            type="search",
             key="food_search_query",
         )
+        inject_instant_food_search()
     with nutrient_col:
         nutrient_name = st.selectbox(
             t("food_sort_criterion"),
@@ -366,7 +473,7 @@ def render_food_catalog(foods: dict) -> None:
         is_favorite = food_name in favorite_foods
 
         with st.container(border=True):
-            info_col, meal_col, favorite_col = st.columns([4.4, 1.1, 0.55], vertical_alignment="center")
+            info_col, actions_col = st.columns([3.5, 1.5], gap="small", vertical_alignment="center")
             with info_col:
                 st.markdown(
                     (
@@ -377,33 +484,61 @@ def render_food_catalog(foods: dict) -> None:
                     ),
                     unsafe_allow_html=True,
                 )
-            with meal_col:
-                if st.button(
-                    t("food_remove") if is_selected else t("food_add"),
-                    key=f"food_meal_toggle_{food_name}",
-                ):
-                    if is_selected:
-                        st.session_state.meal_items.pop(food_name, None)
-                        st.session_state.pop(f"qty_{food_name}", None)
-                    else:
-                        default_quantity = get_default_quantity(food_name, foods)
-                        st.session_state.meal_items[food_name] = default_quantity
-                        st.session_state[f"qty_{food_name}"] = default_quantity
-                    st.rerun()
-            with favorite_col:
-                if st.button(
-                    "★" if is_favorite else "☆",
-                    key=f"food_favorite_toggle_{food_name}",
-                    help=t("food_favorite_remove" if is_favorite else "food_favorite_add"),
-                ):
-                    if is_favorite:
-                        favorite_foods.remove(food_name)
-                    else:
-                        favorite_foods.add(food_name)
-                    updated_favorites = sorted(favorite_foods, key=lambda name: food_to_display.get(name, name).casefold())
-                    st.session_state.favorite_foods = updated_favorites
-                    save_favorite_foods(updated_favorites)
-                    st.rerun()
+            with actions_col:
+                add_col, favorite_col = st.columns([1.25, 0.7], gap="small", vertical_alignment="center")
+                with add_col:
+                    if st.button(
+                        t("food_remove") if is_selected else t("food_add"),
+                        key=f"food_meal_toggle_{food_name}",
+                        use_container_width=True,
+                    ):
+                        if is_selected:
+                            st.session_state.meal_items.pop(food_name, None)
+                            st.session_state.pop(f"qty_{food_name}", None)
+                        else:
+                            default_quantity = get_default_quantity(food_name, foods)
+                            st.session_state.meal_items[food_name] = default_quantity
+                            st.session_state[f"qty_{food_name}"] = default_quantity
+                        st.session_state.pending_selected_food_display_names = [
+                            food_label(name) for name in st.session_state.meal_items
+                        ]
+                        st.rerun()
+                with favorite_col:
+                    if st.button(
+                        "★" if is_favorite else "☆",
+                        key=f"food_favorite_toggle_{food_name}",
+                        help=t("food_favorite_remove" if is_favorite else "food_favorite_add"),
+                        use_container_width=True,
+                    ):
+                        if is_favorite:
+                            favorite_foods.remove(food_name)
+                        else:
+                            favorite_foods.add(food_name)
+                        updated_favorites = sorted(
+                            favorite_foods,
+                            key=lambda name: food_to_display.get(name, name).casefold(),
+                        )
+                        st.session_state.favorite_foods = updated_favorites
+                        save_favorite_foods(updated_favorites)
+                        st.rerun()
+            st.markdown("<div class='food-catalog-bottom-space'></div>", unsafe_allow_html=True)
+
+
+def render_food_catalog(foods: dict) -> None:
+    st.markdown(f"#### {t('food_catalog_title')}")
+    st.caption(t("food_catalog_intro"))
+    search_mode = st.radio(
+        t("food_search_mode"),
+        options=["simple", "advanced"],
+        format_func=lambda mode: t(f"food_search_mode_{mode}"),
+        key="food_search_mode",
+        horizontal=True,
+    )
+    if search_mode == "simple":
+        render_simple_food_selector(foods)
+    else:
+        render_advanced_food_catalog(foods)
+    st.session_state.food_search_last_mode = search_mode
 
 
 def render_meal_builder(foods: dict, targets: dict) -> None:
@@ -737,6 +872,9 @@ def render_saved_meals(foods: dict) -> None:
             for food_name, quantity in loaded_items.items()
             if food_name in foods
         }
+        st.session_state.pending_selected_food_display_names = [
+            food_label(food_name) for food_name in st.session_state.meal_items
+        ]
         for key in list(st.session_state.keys()):
             if key.startswith("qty_"):
                 st.session_state.pop(key)
@@ -774,6 +912,14 @@ def initialize_state(targets: dict, favorite_foods: list[str] | None = None) -> 
         st.session_state.favorite_foods = list(favorite_foods)
     if "food_search_query" not in st.session_state:
         st.session_state.food_search_query = ""
+    if "food_search_mode" not in st.session_state:
+        st.session_state.food_search_mode = "simple"
+    if "food_search_last_mode" not in st.session_state:
+        st.session_state.food_search_last_mode = None
+    if "selected_food_display_names" not in st.session_state:
+        st.session_state.selected_food_display_names = []
+    if "pending_selected_food_display_names" not in st.session_state:
+        st.session_state.pending_selected_food_display_names = None
     if "food_favorites_only" not in st.session_state:
         st.session_state.food_favorites_only = False
     if "food_sort_nutrient" not in st.session_state:
