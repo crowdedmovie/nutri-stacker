@@ -67,9 +67,13 @@ def filter_and_sort_foods(
     favorites_only: bool,
     nutrient_name: str,
     sort_mode: str,
+    excluded_foods: set[str] | None = None,
 ) -> list[str]:
+    excluded_foods = excluded_foods or set()
     candidates = []
     for food_name, food_data in foods.items():
+        if food_name in excluded_foods:
+            continue
         if favorites_only and food_name not in favorite_foods:
             continue
 
