@@ -1,3 +1,4 @@
+import math
 from copy import deepcopy
 
 import streamlit as st
@@ -626,6 +627,68 @@ def update_profile_from_inputs() -> None:
     }
 
 
+def missing_target_values() -> list[str]:
+    missing = []
+    for config in NUTRIENT_GROUPS.values():
+        for nutrient_name in config:
+            value = st.session_state.get(f"target_{nutrient_name}")
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+                missing.append(nutrient_label(nutrient_name))
+    return missing
+
+
+def save_targets_from_inputs() -> None:
+    missing = missing_target_values()
+    if missing:
+        push_notice(
+            t("targets_missing_values", fields=", ".join(missing)),
+            "targets_actions",
+            kind="warning",
+        )
+        return
+
+    update_profile_from_inputs()
+    new_targets = {
+        "macros": {
+            nutrient_name: float(st.session_state[f"target_{nutrient_name}"])
+            for nutrient_name in MACRO_CONFIG
+        },
+        "micros": {
+            nutrient_name: float(st.session_state[f"target_{nutrient_name}"])
+            for nutrient_name in MICRO_CONFIG
+        },
+        "calculator_profile": deepcopy(st.session_state.targets["calculator_profile"]),
+        "app_settings": deepcopy(
+            st.session_state.targets.get("app_settings", DEFAULT_TARGETS["app_settings"])
+        ),
+    }
+    st.session_state.target_inputs = {
+        nutrient_name: new_targets[group_name][nutrient_name]
+        for group_name, config in NUTRIENT_GROUPS.items()
+        for nutrient_name in config
+    }
+    save_targets(new_targets)
+    st.session_state.targets = deepcopy(new_targets)
+    push_notice(t("targets_saved"), "targets_actions")
+
+
+def reset_targets_to_defaults() -> None:
+    reset_targets = deepcopy(DEFAULT_TARGETS)
+    save_targets(reset_targets)
+    st.session_state.targets = deepcopy(reset_targets)
+    st.session_state.target_inputs = {
+        nutrient_name: reset_targets[group_name][nutrient_name]
+        for group_name, config in NUTRIENT_GROUPS.items()
+        for nutrient_name in config
+    }
+    for group_name, config in NUTRIENT_GROUPS.items():
+        for nutrient_name in config:
+            st.session_state[f"target_{nutrient_name}"] = reset_targets[group_name][nutrient_name]
+    for field_name, value in reset_targets["calculator_profile"].items():
+        st.session_state[f"calc_{field_name}"] = value
+    push_notice(t("targets_reset"), "targets_actions")
+
+
 def render_energy_calculator() -> dict:
     st.markdown(t("energy_calculator_title"))
     st.caption(t("energy_calculator_intro"))
@@ -779,32 +842,16 @@ def render_targets_editor(targets: dict) -> None:
             )
 
     save_col, reset_col = st.columns(2)
+    save_col.button(
+        t("save_targets"),
+        type="primary",
+        on_click=save_targets_from_inputs,
+    )
+    reset_col.button(
+        t("reset_targets"),
+        on_click=reset_targets_to_defaults,
+    )
     render_notice("targets_actions")
-
-    if save_col.button(t("save_targets"), type="primary"):
-        update_profile_from_inputs()
-        new_targets = {
-            "macros": {name: float(st.session_state.target_inputs[name]) for name in MACRO_CONFIG},
-            "micros": {name: float(st.session_state.target_inputs[name]) for name in MICRO_CONFIG},
-            "calculator_profile": deepcopy(st.session_state.targets["calculator_profile"]),
-        }
-        save_targets(new_targets)
-        st.session_state.targets = deepcopy(new_targets)
-        push_notice(t("targets_saved"), "targets_actions")
-        st.rerun()
-
-    if reset_col.button(t("reset_targets")):
-        reset_targets = deepcopy(DEFAULT_TARGETS)
-        save_targets(reset_targets)
-        st.session_state.targets = deepcopy(reset_targets)
-        for group_name, config in NUTRIENT_GROUPS.items():
-            for nutrient_name in config:
-                st.session_state.target_inputs[nutrient_name] = reset_targets[group_name][nutrient_name]
-                st.session_state[f"target_{nutrient_name}"] = reset_targets[group_name][nutrient_name]
-        for field_name, value in reset_targets["calculator_profile"].items():
-            st.session_state[f"calc_{field_name}"] = value
-        push_notice(t("targets_reset"), "targets_actions")
-        st.rerun()
 
 
 def render_saved_meals(foods: dict) -> None:
