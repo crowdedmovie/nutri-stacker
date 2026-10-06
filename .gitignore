@@ -10,6 +10,8 @@ env/
 !.streamlit/config.toml
 
 user_targets.json
+user_preferences.json
+live_state.json
 saved_meals/
 
 .vscode/

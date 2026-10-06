@@ -5,13 +5,16 @@ from pathlib import Path
 
 from app.config import (
     ACTIVITY_FACTORS,
+    DEFAULT_PREFERENCES,
     DEFAULT_TARGETS,
     FOOD_FILE,
     GOAL_MODES,
+    LIVE_STATE_FILE,
     MACRO_CONFIG,
     MEALS_DIR,
     MICRO_CONFIG,
     NUTRIENT_GROUPS,
+    PREFERENCES_FILE,
     STRENGTH_INTENSITIES,
     TARGETS_FILE,
 )
@@ -34,6 +37,8 @@ def ensure_storage() -> None:
     MEALS_DIR.mkdir(parents=True, exist_ok=True)
     if not TARGETS_FILE.exists():
         write_json_file(TARGETS_FILE, DEFAULT_TARGETS)
+    if not PREFERENCES_FILE.exists():
+        write_json_file(PREFERENCES_FILE, DEFAULT_PREFERENCES)
 
 
 def normalize_targets(raw_targets) -> dict:
@@ -127,6 +132,57 @@ def load_targets() -> tuple[dict, str | None]:
     return normalized, None
 
 
+def load_live_state() -> tuple[dict, str | None]:
+    try:
+        raw_state = read_json_file(LIVE_STATE_FILE)
+    except FileNotFoundError:
+        return {}, None
+    except json.JSONDecodeError as error:
+        return {}, t("live_state_invalid", error=error)
+
+    if not isinstance(raw_state, dict):
+        return {}, t("live_state_invalid", error=t("invalid_live_state_shape"))
+    return raw_state, None
+
+
+def load_favorite_foods() -> tuple[list[str], str | None]:
+    try:
+        raw_preferences = read_json_file(PREFERENCES_FILE)
+    except FileNotFoundError:
+        write_json_file(PREFERENCES_FILE, DEFAULT_PREFERENCES)
+        return [], None
+    except json.JSONDecodeError as error:
+        write_json_file(PREFERENCES_FILE, DEFAULT_PREFERENCES)
+        return [], t("favorites_invalid_reset", error=error)
+
+    if not isinstance(raw_preferences, dict):
+        write_json_file(PREFERENCES_FILE, DEFAULT_PREFERENCES)
+        return [], t("favorites_invalid_reset", error=t("invalid_preferences_shape"))
+
+    raw_favorites = raw_preferences.get("favorite_foods", [])
+    if not isinstance(raw_favorites, list):
+        write_json_file(PREFERENCES_FILE, DEFAULT_PREFERENCES)
+        return [], t("favorites_invalid_reset", error=t("invalid_favorites_shape"))
+
+    favorites = []
+    for food_name in raw_favorites:
+        if isinstance(food_name, str) and food_name and food_name not in favorites:
+            favorites.append(food_name)
+
+    normalized_preferences = {"favorite_foods": favorites}
+    if normalized_preferences != raw_preferences:
+        write_json_file(PREFERENCES_FILE, normalized_preferences)
+    return favorites, None
+
+
+def save_favorite_foods(favorite_foods: list[str] | set[str]) -> None:
+    unique_foods = []
+    for food_name in favorite_foods:
+        if isinstance(food_name, str) and food_name and food_name not in unique_foods:
+            unique_foods.append(food_name)
+    write_json_file(PREFERENCES_FILE, {"favorite_foods": unique_foods})
+
+
 def list_saved_meals() -> tuple[list[dict], str | None]:
     meals = []
     try:
@@ -163,6 +219,10 @@ def list_saved_meals() -> tuple[list[dict], str | None]:
 
 def save_targets(targets: dict) -> None:
     write_json_file(TARGETS_FILE, targets)
+
+
+def save_live_state(state: dict) -> None:
+    write_json_file(LIVE_STATE_FILE, state)
 
 
 def save_meal(name: str, items: dict[str, float]) -> Path:
