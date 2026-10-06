@@ -9,6 +9,7 @@ LANGUAGE_OPTIONS = {
 
 TRANSLATIONS = {
     "fr": {
+        "clear_search": "Effacer la recherche",
         "app_title": "Nutri Stacker",
         "app_intro": "Construis un repas, compare tes apports à tes objectifs et sauvegarde facilement tes cibles comme tes repas.",
         "language": "Langue",
@@ -203,6 +204,7 @@ TRANSLATIONS = {
         "goal_bulk_standard": "Bulk standard",
     },
     "en": {
+        "clear_search": "Clear search",
         "app_title": "Nutri Stacker",
         "app_intro": "Build a meal, compare your intake to your targets, and easily save both your nutrition targets and meals.",
         "language": "Language",

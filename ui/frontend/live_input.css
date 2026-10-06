@@ -1,0 +1,23 @@
+:host { display: block; font-family: var(--ns-font-family); color: var(--ns-text); }
+* { box-sizing: border-box; }
+label { display: block; margin-bottom: var(--ns-control-label-gap); color: var(--ns-muted); font-size: var(--ns-font-label); font-weight: var(--ns-font-weight); line-height: 1.5; }
+.control { display: flex; align-items: center; gap: var(--ns-space-2); height: var(--ns-control-medium); padding: 0 var(--ns-control-padding); background: var(--ns-surface); border: 1px solid var(--ns-border); border-radius: var(--ns-radius-control); transition: border-color var(--ns-motion-normal) var(--ns-motion-ease); }
+.control:hover { border-color: var(--ns-border-hover); }
+.control:focus-within { border-color: var(--ns-text); box-shadow: 0 0 0 1px var(--ns-text); }
+.ui-live-root:focus-within label { color: var(--ns-text); }
+svg { width: 16px; height: 16px; fill: none; stroke: var(--ns-muted); stroke-width: 1.7; flex: none; }
+input { width: 100%; min-width: 0; border: none; outline: none; background: transparent; color: var(--ns-text); font: inherit; font-size: var(--ns-font-body); }
+input::placeholder { color: var(--ns-placeholder); }
+input::-webkit-search-cancel-button { display: none; }
+.clear { flex: none; width: 24px; height: 24px; border: none; border-radius: 4px; background: transparent; color: var(--ns-muted); cursor: pointer; font-size: 20px; line-height: 1; }
+.clear:hover { background: var(--ns-surface-hover); color: var(--ns-text); }
+.clear:focus-visible { outline: 2px solid var(--ns-text); outline-offset: 2px; }
+.clear[hidden] { display: none; }
+.guidance { margin-top: var(--ns-space-2); font-size: var(--ns-font-caption); color: var(--ns-muted); line-height: 1.5; }
+.guidance:empty { display: none; }
+.error label, .error .guidance { color: var(--ns-danger); }
+.error .control { border-color: var(--ns-danger); }
+.error .control:focus-within { box-shadow: 0 0 0 1px var(--ns-danger); }
+.disabled .control { background: var(--ns-surface-secondary); opacity: .65; cursor: not-allowed; }
+.disabled input { cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

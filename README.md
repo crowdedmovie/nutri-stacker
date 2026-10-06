@@ -139,3 +139,21 @@ For production, use the HTTPS domain handled by the reverse proxy.
 - `pwa/sw.js`: shell-only service worker
 - `pwa/icon.svg`: application icon
 - `pwa_server.py`: local or containerized static shell server
+
+## Design system
+
+The app uses a shared Streamlit UI library in `ui/`, inspired by Luma's public
+style guide. See [the design-system documentation](docs/luma-design-system.md)
+for the source analysis, tokens, component APIs, themes, and verification limits.
+
+Preview the component gallery without accessing application storage:
+
+```bash
+streamlit run design_system.py --server.port 8502
+```
+
+Open `http://localhost:8502/streamlit/`. Run the integration checks with:
+
+```bash
+python -m unittest discover -s tests -v
+```

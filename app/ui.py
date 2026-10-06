@@ -3,7 +3,7 @@ import math
 from copy import deepcopy
 
 import streamlit as st
-import streamlit.components.v1 as components
+import ui
 
 from app.calculations import (
     calculate_recommended_targets,
@@ -43,270 +43,6 @@ from app.storage import (
 )
 
 
-def inject_styles() -> None:
-    st.markdown(
-        """
-        <style>
-        :root {
-            --card-bg: color-mix(in srgb, var(--secondary-background-color) 82%, transparent);
-            --card-bg-strong: color-mix(in srgb, var(--secondary-background-color) 92%, transparent);
-            --card-border: color-mix(in srgb, var(--text-color) 14%, transparent);
-            --muted-text: color-mix(in srgb, var(--text-color) 72%, transparent);
-            --header-text: color-mix(in srgb, var(--text-color) 92%, white 8%);
-        }
-        .macro-card {
-            border: 1px solid var(--card-border);
-            border-radius: 14px;
-            padding: 1rem;
-            background: linear-gradient(180deg, var(--card-bg-strong) 0%, var(--card-bg) 100%);
-            min-height: 150px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-        }
-        .macro-label {
-            color: var(--muted-text);
-            font-size: 0.95rem;
-            margin-bottom: 0.3rem;
-        }
-        .macro-value {
-            font-size: 1.55rem;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 0.15rem;
-        }
-        .macro-target {
-            color: var(--muted-text);
-            font-size: 0.9rem;
-            margin-bottom: 0.8rem;
-        }
-        .table-header {
-            font-weight: 700;
-            color: var(--header-text);
-            border-bottom: 1px solid var(--card-border);
-            padding-bottom: 0.45rem;
-            margin-bottom: 0.5rem;
-        }
-        .food-summary {
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-            background: var(--card-bg);
-            color: var(--text-color);
-            margin-bottom: 0.75rem;
-        }
-        .food-item-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 0.2rem;
-        }
-        .food-item-meta {
-            color: var(--muted-text);
-            font-size: 0.92rem;
-        }
-        .food-detail-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 0.65rem;
-            margin: 0.35rem 0 0.85rem;
-        }
-        .food-detail-card {
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            padding: 0.7rem 0.8rem;
-            background: var(--card-bg);
-        }
-        .food-detail-label {
-            color: var(--muted-text);
-            font-size: 0.82rem;
-            margin-bottom: 0.2rem;
-        }
-        .food-detail-value {
-            color: var(--text-color);
-            font-size: 1rem;
-            font-weight: 700;
-        }
-        .food-micro-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            gap: 0.45rem 0.9rem;
-        }
-        .food-micro-item {
-            display: flex;
-            justify-content: space-between;
-            gap: 0.75rem;
-            padding: 0.45rem 0.55rem;
-            border-radius: 8px;
-            background: color-mix(in srgb, var(--card-bg) 82%, transparent);
-        }
-        .food-micro-name {
-            color: var(--muted-text);
-            font-size: 0.88rem;
-        }
-        .food-micro-value {
-            color: var(--text-color);
-            font-size: 0.9rem;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        .food-catalog-meta {
-            color: var(--muted-text);
-            font-size: 0.88rem;
-            line-height: 1.35;
-            padding-bottom: 0.25rem;
-        }
-        .food-catalog-name {
-            color: var(--text-color);
-            font-size: 0.98rem;
-            font-weight: 700;
-            margin-bottom: 0.15rem;
-        }
-        .food-catalog-bottom-space {
-            height: 0.25rem;
-        }
-        .st-key-notice-success {
-            background: rgba(34, 197, 94, 0.22) !important;
-            border: 1px solid rgba(74, 222, 128, 0.55) !important;
-            border-radius: 0.55rem;
-            padding: 0.65rem 0.8rem !important;
-        }
-        .st-key-notice-warning {
-            background: rgba(245, 158, 11, 0.2) !important;
-            border: 1px solid rgba(251, 191, 36, 0.55) !important;
-            border-radius: 0.55rem;
-            padding: 0.65rem 0.8rem !important;
-        }
-        .st-key-notice-info {
-            background: rgba(59, 130, 246, 0.2) !important;
-            border: 1px solid rgba(96, 165, 250, 0.52) !important;
-            border-radius: 0.55rem;
-            padding: 0.65rem 0.8rem !important;
-        }
-        .st-key-notice-success > div,
-        .st-key-notice-warning > div,
-        .st-key-notice-info > div {
-            background: transparent !important;
-        }
-        .st-key-notice-success [data-testid="stHorizontalBlock"],
-        .st-key-notice-warning [data-testid="stHorizontalBlock"],
-        .st-key-notice-info [data-testid="stHorizontalBlock"] {
-            align-items: stretch !important;
-        }
-        .st-key-notice-success [data-testid="stColumn"],
-        .st-key-notice-warning [data-testid="stColumn"],
-        .st-key-notice-info [data-testid="stColumn"] {
-            align-self: stretch !important;
-        }
-        .st-key-notice-success [data-testid="stColumn"] > [data-testid="stVerticalBlock"],
-        .st-key-notice-warning [data-testid="stColumn"] > [data-testid="stVerticalBlock"],
-        .st-key-notice-info [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
-            height: 100% !important;
-            justify-content: center !important;
-        }
-        .st-key-notice-success button,
-        .st-key-notice-warning button,
-        .st-key-notice-info button {
-            border: 0;
-            background: transparent;
-            color: var(--text-color);
-            min-height: 2.25rem;
-            font-size: 1.15rem;
-        }
-        .st-key-notice-success [data-testid="stButton"],
-        .st-key-notice-warning [data-testid="stButton"],
-        .st-key-notice-info [data-testid="stButton"] {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-        }
-        .st-key-notice-success [data-testid="stButton"] > button,
-        .st-key-notice-warning [data-testid="stButton"] > button,
-        .st-key-notice-info [data-testid="stButton"] > button {
-            margin: 0 auto;
-        }
-        .st-key-notice-success [data-testid="stMarkdownContainer"],
-        .st-key-notice-warning [data-testid="stMarkdownContainer"],
-        .st-key-notice-info [data-testid="stMarkdownContainer"] {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        .st-key-notice-success [data-testid="stMarkdownContainer"] p,
-        .st-key-notice-warning [data-testid="stMarkdownContainer"] p,
-        .st-key-notice-info [data-testid="stMarkdownContainer"] p {
-            margin: 0 !important;
-        }
-        .notice-copy {
-            display: flex;
-            align-items: center;
-            height: 2.25rem;
-            min-height: 2.25rem;
-            padding: 0 0.65rem;
-            color: var(--text-color);
-            line-height: 1.2;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def inject_instant_food_search() -> None:
-    components.html(
-        """
-        <script>
-        const doc = window.parent.document;
-        if (doc.__nutriStackerInstantFoodSearchObserver) {
-            doc.__nutriStackerInstantFoodSearchObserver.disconnect();
-        }
-        const previousHandler = doc.__nutriStackerInstantFoodSearchHandler;
-        if (previousHandler) {
-            doc.querySelectorAll('input[data-testid="stTextInputField"]').forEach(function(input) {
-                input.removeEventListener("input", previousHandler);
-                input.__nutriStackerInstantSearchAttached = false;
-            });
-        }
-
-        const instantFoodSearchHandler = function(event) {
-            const input = event.target;
-            window.clearTimeout(input.__nutriStackerSearchTimer);
-            input.__nutriStackerSearchTimer = window.setTimeout(function() {
-                if (!input.isConnected) {
-                    return;
-                }
-                const eventWindow = doc.defaultView || window;
-                input.dispatchEvent(new eventWindow.Event("change", {bubbles: true}));
-                input.dispatchEvent(new eventWindow.KeyboardEvent("keydown", {
-                    key: "Enter",
-                    code: "Enter",
-                    keyCode: 13,
-                    which: 13,
-                    bubbles: true,
-                    cancelable: true,
-                }));
-            }, 120);
-        };
-
-        const attachInstantSearch = function() {
-            doc.querySelectorAll('input[data-testid="stTextInputField"][type="search"]').forEach(function(input) {
-                if (input.__nutriStackerInstantSearchAttached) {
-                    return;
-                }
-                input.addEventListener("input", instantFoodSearchHandler);
-                input.__nutriStackerInstantSearchAttached = true;
-            });
-        };
-
-        const instantFoodSearchObserver = new MutationObserver(attachInstantSearch);
-        instantFoodSearchObserver.observe(doc.body, {childList: true, subtree: true});
-        attachInstantSearch();
-        doc.__nutriStackerInstantFoodSearchObserver = instantFoodSearchObserver;
-        doc.__nutriStackerInstantFoodSearchHandler = instantFoodSearchHandler;
-        </script>
-        """,
-        height=0,
-    )
-
-
 def format_number(value: float) -> str:
     if abs(value) >= 100:
         return f"{value:.0f}"
@@ -329,12 +65,12 @@ def render_notice(scope: str) -> None:
         notice_kind = "info"
     safe_message = html.escape(str(notice.get("message", ""))).replace("\n", "<br>")
 
-    with st.container(border=False, key=f"notice-{notice_kind}"):
+    with st.container(border=False, key=f"ui-notice-{notice_kind}-{scope}"):
         message_col, close_col = st.columns([0.94, 0.06], gap="small", vertical_alignment="center")
         with message_col:
             st.markdown(f"<div class='notice-copy'>{safe_message}</div>", unsafe_allow_html=True)
         with close_col:
-            if st.button("✕", key=f"close_notice_{scope}", help=t("close_message")):
+            if ui.button("✕", key=f"close_notice_{scope}", variant="ghost", size="small", help=t("close_message")):
                 st.session_state.notice = None
                 rerun_with_live_state()
 
@@ -344,13 +80,14 @@ def render_language_selector() -> None:
     if "language_selector" not in st.session_state:
         st.session_state.language_selector = current
 
-    st.sidebar.selectbox(
-        t("language"),
-        options=list(LANGUAGE_OPTIONS.keys()),
-        format_func=lambda code: LANGUAGE_OPTIONS[code],
-        help=t("language_help"),
-        key="language_selector",
-    )
+    with st.sidebar:
+        ui.select(
+            t("language"),
+            options=list(LANGUAGE_OPTIONS.keys()),
+            format_func=lambda code: LANGUAGE_OPTIONS[code],
+            help=t("language_help"),
+            key="language_selector",
+        )
     selected = st.session_state.language_selector
 
     if selected != current:
@@ -369,22 +106,16 @@ def render_macro_cards(macro_totals: dict, targets: dict) -> None:
         percent = 0.0 if target_value <= 0 else (current_value / target_value) * 100
 
         with column:
-            st.markdown(
-                (
-                    "<div class='macro-card'>"
-                    f"<div class='macro-label'>{nutrient_label(nutrient_name)}</div>"
-                    f"<div class='macro-value'>{format_number(current_value)} {config['unit']}</div>"
-                    f"<div class='macro-target'>{t('target_word')}: {format_number(target_value)} {config['unit']} "
-                    f"({percent:.0f}%)</div>"
-                    "</div>"
-                ),
-                unsafe_allow_html=True,
+            ui.stat_card(
+                nutrient_label(nutrient_name),
+                f"{format_number(current_value)} {config['unit']}",
+                target=f"{t('target_word')}: {format_number(target_value)} {config['unit']} ({percent:.0f}%)",
+                progress=progress,
+                progress_label=nutrient_label(nutrient_name),
             )
-            st.progress(progress)
 
 
 def render_micro_table(micro_totals: dict, targets: dict) -> None:
-    header_columns = st.columns([2.3, 1.1, 1.1, 1.0, 1.3, 1.4])
     headers = [
         t("micro_header_nutrient"),
         t("micro_header_current"),
@@ -393,10 +124,7 @@ def render_micro_table(micro_totals: dict, targets: dict) -> None:
         t("micro_header_gap"),
         t("micro_header_progress"),
     ]
-    for column, header in zip(header_columns, headers):
-        with column:
-            st.markdown(f"<div class='table-header'>{header}</div>", unsafe_allow_html=True)
-
+    rows = []
     for nutrient_name, config in MICRO_CONFIG.items():
         current_value = micro_totals[nutrient_name]
         target_value = targets["micros"][nutrient_name]
@@ -408,14 +136,14 @@ def render_micro_table(micro_totals: dict, targets: dict) -> None:
             else t("status_remaining", value=format_number(abs(difference)), unit=config["unit"])
         )
 
-        row_columns = st.columns([2.3, 1.1, 1.1, 1.0, 1.3, 1.4])
-        row_columns[0].write(nutrient_label(nutrient_name))
-        row_columns[1].write(f"{format_number(current_value)} {config['unit']}")
-        row_columns[2].write(f"{format_number(target_value)} {config['unit']}")
-        row_columns[3].write(f"{percent:.0f}%")
-        row_columns[4].write(status)
-        with row_columns[5]:
-            st.progress(0.0 if target_value <= 0 else min(current_value / target_value, 1.0))
+        rows.append([
+            nutrient_label(nutrient_name),
+            f"{format_number(current_value)} {config['unit']}",
+            f"{format_number(target_value)} {config['unit']}",
+            f"{percent:.0f}%", status,
+            0.0 if target_value <= 0 else min(current_value / target_value, 1.0),
+        ])
+    ui.data_table(headers, rows, progress_column=5)
 
 
 def render_food_breakdown(detail: dict) -> None:
@@ -459,7 +187,7 @@ def render_simple_food_selector(foods: dict) -> None:
         st.info(t("food_all_selected"))
         return
     display_to_food = {food_to_display[name]: name for name in available_foods}
-    selected_display_name = st.selectbox(
+    selected_display_name = ui.select(
         t("foods_label"),
         options=sorted(display_to_food),
         index=None,
@@ -486,15 +214,14 @@ def render_advanced_food_catalog(foods: dict) -> None:
 
     search_col, nutrient_col = st.columns([1.3, 1], gap="medium")
     with search_col:
-        search_query = st.text_input(
+        search_query = ui.live_input(
             t("food_search_label"),
             placeholder=t("foods_placeholder"),
-            type="search",
             key="food_search_query",
+            clear_label=t("clear_search"),
         )
-        inject_instant_food_search()
     with nutrient_col:
-        nutrient_name = st.selectbox(
+        nutrient_name = ui.select(
             t("food_sort_criterion"),
             options=nutrient_options,
             format_func=nutrient_label,
@@ -511,7 +238,7 @@ def render_advanced_food_catalog(foods: dict) -> None:
             "asc": "food_sort_mode_asc",
             "desc": "food_sort_mode_desc",
         }[mode]
-        if st.button(
+        if ui.button(
             t("food_sort_button", mode=t(mode_key)),
             help=t("food_sort_button_help"),
             key="food_sort_mode_button",
@@ -551,12 +278,12 @@ def render_advanced_food_catalog(foods: dict) -> None:
             nutrient_config = {**MACRO_CONFIG, **MICRO_CONFIG}[nutrient_name]
             is_favorite = food_name in favorite_foods
 
-            with st.container(border=True):
+            with ui.card(key=f"catalog-{food_name}", compact=True):
                 info_col, actions_col = st.columns([3.5, 1.5], gap="small", vertical_alignment="center")
                 with info_col:
                     st.markdown(
                         (
-                            f"<div class='food-catalog-name'>{food_to_display[food_name]}</div>"
+                            f"<div class='food-catalog-name'>{html.escape(food_to_display[food_name])}</div>"
                             f"<div class='food-catalog-meta'>{t('reference_label')} : "
                             f"{food_data['Ref_Qte']} {food_data['Unite']}<br>"
                             f"{t('food_value_reference', value=format_number(nutrient_value), unit=nutrient_config['unit'], quantity=food_data['Ref_Qte'], reference_unit=food_data['Unite'])}</div>"
@@ -566,7 +293,7 @@ def render_advanced_food_catalog(foods: dict) -> None:
                 with actions_col:
                     add_col, favorite_col = st.columns([1.25, 0.7], gap="small", vertical_alignment="center")
                     with add_col:
-                        if st.button(
+                        if ui.button(
                             t("food_add"),
                             key=f"food_meal_toggle_{food_name}",
                             use_container_width=True,
@@ -576,9 +303,10 @@ def render_advanced_food_catalog(foods: dict) -> None:
                             st.session_state[f"qty_{food_name}"] = default_quantity
                             rerun_with_live_state()
                     with favorite_col:
-                        if st.button(
+                        if ui.button(
                             "★" if is_favorite else "☆",
                             key=f"food_favorite_toggle_{food_name}",
+                            variant="ghost",
                             help=t("food_favorite_remove" if is_favorite else "food_favorite_add"),
                             use_container_width=True,
                         ):
@@ -614,20 +342,17 @@ def render_food_catalog(foods: dict) -> None:
 
 def render_meal_builder(foods: dict, targets: dict) -> None:
     st.subheader(t("meal_subheader"))
-    col_input, col_results = st.columns([1.05, 1.35], gap="large")
+    col_input, col_results = ui.split_layout()
 
-    with col_input:
+    with col_input, ui.card(key="meal-catalog"):
         st.write(t("meal_intro"))
         render_food_catalog(foods)
 
     selected_foods = [food_name for food_name in st.session_state.meal_items if food_name in foods]
-    macro_totals, micro_totals, details, missing_foods = calculate_totals(st.session_state.meal_items, foods)
-
-    with col_input:
+    with col_input, ui.card(key="meal-selection", title=t("selected_foods")):
         if not selected_foods:
             st.info(t("meal_empty"))
         else:
-            st.markdown(f"#### {t('selected_foods')}")
             for food_name in selected_foods:
                 food_data = foods[food_name]
                 reference_quantity = food_data["Ref_Qte"]
@@ -639,27 +364,28 @@ def render_meal_builder(foods: dict, targets: dict) -> None:
                         get_default_quantity(food_name, foods),
                     )
 
-                with st.container(border=True):
+                with ui.card(key=f"selected-{food_name}", compact=True):
                     info_col, remove_col = st.columns([3.2, 1], gap="medium", vertical_alignment="center")
                     with info_col:
                         st.markdown(
                             (
-                                f"<div class='food-item-title'>{food_label(food_name)}</div>"
+                                f"<div class='food-item-title'>{html.escape(food_label(food_name))}</div>"
                                 f"<div class='food-item-meta'>{t('reference_label')} : {reference_quantity} {reference_unit}</div>"
                             ),
                             unsafe_allow_html=True,
                         )
                     with remove_col:
-                        if st.button(
+                        if ui.button(
                             t("food_remove"),
                             key=f"selected_food_remove_{food_name}",
+                            variant="danger", size="small",
                             use_container_width=True,
                         ):
                             st.session_state.meal_items.pop(food_name, None)
                             st.session_state.pop(quantity_key, None)
                             rerun_with_live_state()
 
-                    quantity = st.number_input(
+                    quantity = ui.number_input(
                         t("quantity_label"),
                         min_value=0.0,
                         step=1.0 if float(reference_quantity) == 1 else 10.0,
@@ -673,8 +399,8 @@ def render_meal_builder(foods: dict, targets: dict) -> None:
                         with st.expander(t("food_detail"), expanded=False):
                             render_food_breakdown(single_details[0])
 
-    with col_results:
-        st.subheader(t("nutrition_analysis"))
+    macro_totals, micro_totals, details, missing_foods = calculate_totals(st.session_state.meal_items, foods)
+    with col_results, ui.card(key="meal-analysis", title=t("nutrition_analysis")):
         if missing_foods:
             st.warning(t("missing_saved_foods", foods=format_food_names(missing_foods)))
 
@@ -863,9 +589,9 @@ def render_energy_calculator() -> dict:
     st.caption(t("energy_calculator_intro"))
     st.info(t("energy_calculator_info"))
 
-    profile_col, activity_col = st.columns(2, gap="large")
+    profile_col, activity_col = ui.split_layout(key="calculator", widths=(1, 1))
 
-    with profile_col:
+    with profile_col, ui.card(key="calculator-profile"):
         st.markdown(t("profile_section"))
         st.radio(
             t("sex"),
@@ -875,9 +601,9 @@ def render_energy_calculator() -> dict:
             horizontal=True,
             help=t("sex_help"),
         )
-        st.number_input(t("age"), min_value=15, max_value=90, step=1, key="calc_age", help=t("age_help"))
-        st.number_input(t("height_cm"), min_value=120.0, max_value=230.0, step=1.0, key="calc_height_cm", help=t("height_help"))
-        st.number_input(t("weight_kg"), min_value=35.0, max_value=250.0, step=0.1, key="calc_weight_kg", help=t("weight_help"))
+        ui.number_input(t("age"), min_value=15, max_value=90, step=1, key="calc_age", help=t("age_help"))
+        ui.number_input(t("height_cm"), min_value=120.0, max_value=230.0, step=1.0, key="calc_height_cm", help=t("height_help"))
+        ui.number_input(t("weight_kg"), min_value=35.0, max_value=250.0, step=0.1, key="calc_weight_kg", help=t("weight_help"))
 
         body_fat_mode = st.radio(
             t("body_fat"),
@@ -891,7 +617,7 @@ def render_energy_calculator() -> dict:
             help=t("body_fat_help"),
         )
         if body_fat_mode == "known":
-            st.number_input(
+            ui.number_input(
                 t("body_fat_pct"),
                 min_value=2.0,
                 max_value=60.0,
@@ -900,15 +626,15 @@ def render_energy_calculator() -> dict:
                 help=t("body_fat_pct_help"),
             )
         elif body_fat_mode == "estimate_navy":
-            st.number_input(t("neck_cm"), min_value=20.0, max_value=70.0, step=0.1, key="calc_neck_cm", help=t("neck_help"))
-            st.number_input(t("waist_cm"), min_value=40.0, max_value=200.0, step=0.1, key="calc_waist_cm", help=t("waist_help"))
+            ui.number_input(t("neck_cm"), min_value=20.0, max_value=70.0, step=0.1, key="calc_neck_cm", help=t("neck_help"))
+            ui.number_input(t("waist_cm"), min_value=40.0, max_value=200.0, step=0.1, key="calc_waist_cm", help=t("waist_help"))
             if st.session_state.calc_sex == "femme":
-                st.number_input(t("hip_cm"), min_value=50.0, max_value=220.0, step=0.1, key="calc_hip_cm", help=t("hip_help"))
+                ui.number_input(t("hip_cm"), min_value=50.0, max_value=220.0, step=0.1, key="calc_hip_cm", help=t("hip_help"))
             st.caption(t("body_fat_caption"))
 
-    with activity_col:
+    with activity_col, ui.card(key="calculator-activity"):
         st.markdown(t("activity_goal_section"))
-        st.selectbox(
+        ui.select(
             t("activity_daily"),
             options=list(ACTIVITY_FACTORS.keys()),
             format_func=activity_label,
@@ -917,11 +643,11 @@ def render_energy_calculator() -> dict:
         )
         st.caption(activity_description(st.session_state.calc_lifestyle_activity))
         st.info(t("activity_extra_info"))
-        st.number_input(t("walk_km"), min_value=0.0, max_value=60.0, step=0.5, key="calc_walk_km", help=t("walk_help"))
-        st.number_input(t("run_km"), min_value=0.0, max_value=60.0, step=0.5, key="calc_run_km", help=t("run_help"))
-        st.number_input(t("strength_minutes"), min_value=0.0, max_value=300.0, step=5.0, key="calc_strength_minutes", help=t("strength_minutes_help"))
-        st.selectbox(t("strength_intensity"), options=list(STRENGTH_INTENSITIES.keys()), format_func=strength_label, key="calc_strength_intensity", help=t("strength_intensity_help"))
-        st.selectbox(t("goal_nutrition"), options=list(GOAL_MODES.keys()), format_func=goal_label, key="calc_goal_mode", help=t("goal_nutrition_help"))
+        ui.number_input(t("walk_km"), min_value=0.0, max_value=60.0, step=0.5, key="calc_walk_km", help=t("walk_help"))
+        ui.number_input(t("run_km"), min_value=0.0, max_value=60.0, step=0.5, key="calc_run_km", help=t("run_help"))
+        ui.number_input(t("strength_minutes"), min_value=0.0, max_value=300.0, step=5.0, key="calc_strength_minutes", help=t("strength_minutes_help"))
+        ui.select(t("strength_intensity"), options=list(STRENGTH_INTENSITIES.keys()), format_func=strength_label, key="calc_strength_intensity", help=t("strength_intensity_help"))
+        ui.select(t("goal_nutrition"), options=list(GOAL_MODES.keys()), format_func=goal_label, key="calc_goal_mode", help=t("goal_nutrition_help"))
 
     update_profile_from_inputs()
     recommendation = calculate_recommended_targets(st.session_state.targets["calculator_profile"])
@@ -973,7 +699,7 @@ def render_energy_calculator() -> dict:
     st.caption(t("micro_adjustment_caption"))
 
     render_notice("targets_reco")
-    if st.button(t("apply_reco")):
+    if ui.button(t("apply_reco"), key="apply-recommendation", variant="primary"):
         apply_recommended_targets(recommendation)
         push_notice(t("applied_reco_notice"), "targets_reco")
         rerun_with_live_state()
@@ -991,7 +717,7 @@ def render_targets_editor(targets: dict) -> None:
     macro_columns = st.columns(2)
     for index, (nutrient_name, config) in enumerate(MACRO_CONFIG.items()):
         with macro_columns[index % 2]:
-            st.session_state.target_inputs[nutrient_name] = st.number_input(
+            st.session_state.target_inputs[nutrient_name] = ui.number_input(
                 f"{nutrient_label(nutrient_name)} ({config['unit']})",
                 min_value=0.0,
                 step=10.0,
@@ -1003,7 +729,7 @@ def render_targets_editor(targets: dict) -> None:
     for index, (nutrient_name, config) in enumerate(MICRO_CONFIG.items()):
         with micro_columns[index % 2]:
             step = 0.5 if config["unit"] in {"mg", "µg", "µg ÉRA"} else 1.0
-            st.session_state.target_inputs[nutrient_name] = st.number_input(
+            st.session_state.target_inputs[nutrient_name] = ui.number_input(
                 f"{nutrient_label(nutrient_name)} ({config['unit']})",
                 min_value=0.0,
                 step=step,
@@ -1011,15 +737,10 @@ def render_targets_editor(targets: dict) -> None:
             )
 
     save_col, reset_col = st.columns(2)
-    save_col.button(
-        t("save_targets"),
-        type="primary",
-        on_click=save_targets_from_inputs,
-    )
-    reset_col.button(
-        t("reset_targets"),
-        on_click=reset_targets_to_defaults,
-    )
+    with save_col:
+        ui.button(t("save_targets"), key="save-targets", variant="primary", on_click=save_targets_from_inputs)
+    with reset_col:
+        ui.button(t("reset_targets"), key="reset-targets", on_click=reset_targets_to_defaults)
     render_notice("targets_actions")
 
 
@@ -1027,11 +748,13 @@ def render_saved_meals(foods: dict) -> None:
     st.subheader(t("saved_meals_subheader"))
     st.write(t("saved_meals_intro"))
 
-    save_name = st.text_input(t("meal_name"), value=st.session_state.meal_name, placeholder=t("meal_name_placeholder"))
+    if "saved_meal_name" not in st.session_state or st.session_state.pop("saved_meal_name_reset", False):
+        st.session_state.saved_meal_name = st.session_state.meal_name
+    save_name = ui.input(t("meal_name"), key="saved_meal_name", placeholder=t("meal_name_placeholder"))
     st.session_state.meal_name = save_name
 
     render_notice("saved_meal_save")
-    if st.button(t("save_meal"), type="primary"):
+    if ui.button(t("save_meal"), key="save-meal", variant="primary"):
         if not save_name.strip():
             st.error(t("meal_name_required"))
         elif not st.session_state.meal_items:
@@ -1054,7 +777,7 @@ def render_saved_meals(foods: dict) -> None:
         (f"{meal['name']} - {meal['created_at']}" if meal["created_at"] else meal["name"]): meal
         for meal in meals
     }
-    selected_label = st.selectbox(t("saved_meals_list"), options=list(meal_options.keys()))
+    selected_label = ui.select(t("saved_meals_list"), options=list(meal_options.keys()), key="saved-meal-picker")
     selected_meal = meal_options[selected_label]
 
     if selected_meal["invalid"]:
@@ -1064,7 +787,7 @@ def render_saved_meals(foods: dict) -> None:
     st.caption(t("file_caption", filename=selected_meal["path"].name))
 
     render_notice("saved_meal_load")
-    if st.button(t("load_meal")):
+    if ui.button(t("load_meal"), key="load-meal", variant="primary"):
         loaded_items, load_error = load_meal_file(selected_meal["path"])
         if load_error:
             st.error(load_error)
@@ -1083,6 +806,7 @@ def render_saved_meals(foods: dict) -> None:
             st.session_state[f"qty_{food_name}"] = quantity
 
         st.session_state.meal_name = selected_meal["name"]
+        st.session_state.saved_meal_name_reset = True
         if missing_foods:
             push_notice(
                 t("meal_loaded_partial", name=selected_meal["name"], foods=format_food_names(missing_foods)),

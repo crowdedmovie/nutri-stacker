@@ -1,0 +1,124 @@
+/* Streamlit DOM compatibility layer. Keep implementation selectors in this file. */
+.stApp { background: var(--ns-surface); color: var(--ns-text); font-family: var(--ns-font-family); }
+.stMainBlockContainer { max-width: var(--ns-layout-max); padding: var(--ns-space-10) var(--ns-space-8) var(--ns-space-12); }
+.st-key-ui-shell { font-size: var(--ns-font-body); line-height: var(--ns-font-line); }
+.st-key-ui-shell [data-testid="stVerticalBlock"] { gap: var(--ns-space-4); }
+.st-key-ui-shell h1, .st-key-ui-shell h2, .st-key-ui-shell h3, .st-key-ui-shell h4 { color: var(--ns-text); font-weight: var(--ns-font-strong); letter-spacing: -.025em; }
+.st-key-ui-shell h2 { font-size: var(--ns-font-section); line-height: 1.3; padding: var(--ns-space-3) 0; }
+.st-key-ui-shell h3 { font-size: 18px; line-height: 1.3; }
+.st-key-ui-shell h4 { font-size: var(--ns-font-body); }
+.st-key-ui-shell [data-testid="stCaptionContainer"] { color: var(--ns-muted); font-size: var(--ns-font-caption); }
+.ui-page-header { padding: 0 0 var(--ns-space-6); }
+.ui-brand { display: flex; align-items: center; gap: var(--ns-space-2); font-size: var(--ns-font-label); font-weight: var(--ns-font-strong); margin-bottom: var(--ns-space-8); }
+.ui-brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--ns-radius-control); background: var(--ns-action); color: var(--ns-on-action); font-size: 20px; letter-spacing: -.06em; }
+.ui-page-header h1 { font-size: var(--ns-font-title); line-height: 1.2; margin: 0 0 var(--ns-space-3); padding: 0; }
+.ui-page-header p { max-width: 640px; margin: 0; color: var(--ns-muted); line-height: var(--ns-font-line); }
+.st-key-ui-shell [data-baseweb="tab-list"] { gap: var(--ns-space-6); border-bottom: 1px solid var(--ns-border); }
+.st-key-ui-shell [data-baseweb="tab"] { padding: var(--ns-space-3) 0; height: auto; color: var(--ns-muted); font-weight: var(--ns-font-weight); background: transparent; }
+.st-key-ui-shell [data-baseweb="tab"][aria-selected="true"] { color: var(--ns-text); }
+.st-key-ui-shell [data-baseweb="tab-highlight"] { background: var(--ns-text); height: 2px; }
+.st-key-ui-shell [data-baseweb="tab-border"] { display: none; }
+.st-key-ui-shell [data-baseweb="tab-panel"] { padding-top: var(--ns-space-6); }
+/* Button variants, shared with the native primary/secondary semantics. */
+.st-key-ui-shell [data-testid="stButton"] button {
+    min-height: var(--ns-control-medium); border: 1px solid var(--ns-border); border-radius: var(--ns-radius-control);
+    padding: 0 var(--ns-control-padding); background: var(--ns-surface); color: var(--ns-text);
+    font-size: var(--ns-font-body); font-weight: var(--ns-font-weight); line-height: 1;
+    box-shadow: none; transition: background-color var(--ns-motion-fast) var(--ns-motion-ease), border-color var(--ns-motion-fast) var(--ns-motion-ease);
+}
+.st-key-ui-shell [data-testid="stButton"] button p { font-size: inherit; font-weight: inherit; }
+.st-key-ui-shell [data-testid="stButton"] button:hover { border-color: var(--ns-border-hover); background: var(--ns-surface-hover); color: var(--ns-text); }
+.st-key-ui-shell [class*="st-key-ui-button-primary-"] [data-testid="stButton"] button { background: var(--ns-action); border-color: var(--ns-action); color: var(--ns-on-action); }
+.st-key-ui-shell [class*="st-key-ui-button-primary-"] [data-testid="stButton"] button:hover { background: var(--ns-action-hover); border-color: var(--ns-action-hover); }
+.st-key-ui-shell [class*="st-key-ui-button-ghost-"] [data-testid="stButton"] button { background: transparent; border-color: transparent; color: var(--ns-muted); }
+.st-key-ui-shell [class*="st-key-ui-button-ghost-"] [data-testid="stButton"] button:hover { background: var(--ns-surface-hover); color: var(--ns-text); }
+.st-key-ui-shell [class*="st-key-ui-button-danger-"] [data-testid="stButton"] button { border-color: color-mix(in srgb, var(--ns-danger) 25%, transparent); color: var(--ns-danger); }
+.st-key-ui-shell [class*="st-key-ui-button-danger-"] [data-testid="stButton"] button:hover { background: color-mix(in srgb, var(--ns-danger) 8%, var(--ns-surface)); border-color: var(--ns-danger); }
+.st-key-ui-shell [data-testid="stButton"] button:focus-visible { outline: 2px solid var(--ns-text); outline-offset: 2px; }
+.st-key-ui-shell [data-testid="stButton"] button:active:not(:disabled) { filter: brightness(.94); }
+.st-key-ui-shell [data-testid="stButton"] button:disabled { opacity: .45; cursor: not-allowed; }
+.st-key-ui-shell [class*="st-key-ui-button-"][class*="-small-"] button { min-height: var(--ns-control-small); padding: 0 10px; font-size: var(--ns-font-label); }
+.st-key-ui-shell [class*="st-key-ui-button-"][class*="-large-"] button { min-height: var(--ns-control-large); padding: 0 18px; font-size: 18px; }
+/* Native text / number / select. BaseWeb internals are isolated here. */
+[class*="st-key-ui-input-"], [class*="st-key-ui-number-"], [class*="st-key-ui-select-"] { --ui-field-height: var(--ns-control-medium); }
+[class*="st-key-ui-input-"], [class*="st-key-ui-number-"], [class*="st-key-ui-select-"] { --ui-field-font: var(--ns-font-body); }
+[class*="st-key-ui-input-"][class*="-small-"], [class*="st-key-ui-number-"][class*="-small-"], [class*="st-key-ui-select-"][class*="-small-"] { --ui-field-height: var(--ns-control-small); --ui-field-font: var(--ns-font-label); }
+[class*="st-key-ui-input-"][class*="-large-"], [class*="st-key-ui-number-"][class*="-large-"], [class*="st-key-ui-select-"][class*="-large-"] { --ui-field-height: var(--ns-control-large); --ui-field-font: 18px; }
+[class*="st-key-ui-input-"] [data-baseweb="input"], [class*="st-key-ui-number-"] [data-baseweb="input"], [class*="st-key-ui-select-"] [data-baseweb="select"] > div {
+    min-height: var(--ui-field-height); background: var(--ns-surface); color: var(--ns-text); border: 1px solid var(--ns-border); border-radius: var(--ns-radius-control);
+    box-shadow: none; transition: border-color var(--ns-motion-normal) var(--ns-motion-ease);
+}
+[class*="st-key-ui-input-"] [data-baseweb="base-input"], [class*="st-key-ui-number-"] [data-baseweb="base-input"] { background: transparent; }
+[class*="st-key-ui-input-"] input, [class*="st-key-ui-number-"] input { min-height: calc(var(--ui-field-height) - 2px); padding: 0 var(--ns-control-padding); font-size: var(--ui-field-font); color: var(--ns-text); }
+[class*="st-key-ui-select-"] [data-baseweb="select"] { font-size: var(--ui-field-font); }
+[class*="st-key-ui-select-"] [data-baseweb="select"] > div { padding-left: var(--ns-control-padding); }
+[class*="st-key-ui-"] [data-testid="stWidgetLabel"] { margin-bottom: var(--ns-control-label-gap); color: var(--ns-muted); }
+[class*="st-key-ui-"] [data-testid="stWidgetLabel"] p { font-size: var(--ns-font-label); font-weight: var(--ns-font-weight); }
+[class*="st-key-ui-input-"] input::placeholder { color: var(--ns-placeholder); }
+[class*="st-key-ui-"] [data-baseweb="input"]:hover, [class*="st-key-ui-select-"] [data-baseweb="select"] > div:hover { border-color: var(--ns-border-hover); }
+[class*="st-key-ui-"] [data-baseweb="input"]:focus-within, [class*="st-key-ui-select-"] [data-baseweb="select"] > div:focus-within { border-color: var(--ns-text); box-shadow: 0 0 0 1px var(--ns-text); }
+[class*="st-key-ui-input-solid-"] [data-baseweb="input"] { background: var(--ns-surface-secondary); border-color: transparent; }
+[class*="st-key-ui-input-error-"] [data-baseweb="input"], [class*="st-key-ui-number-error-"] [data-baseweb="input"], [class*="st-key-ui-select-error-"] [data-baseweb="select"] > div { border-color: var(--ns-danger); }
+[class*="st-key-ui-"] [data-baseweb="input"]:has(input:disabled), [class*="st-key-ui-select-"] [data-baseweb="select"]:has(input:disabled) > div { background: var(--ns-surface-secondary); opacity: .65; }
+.ui-field-help { font-size: var(--ns-font-caption); line-height: var(--ns-font-line); color: var(--ns-muted); margin-top: -8px; }
+.ui-field-error { color: var(--ns-danger); }
+/* Select portals sit outside the shell. */
+[data-baseweb="popover"] [role="listbox"] { background: var(--ns-surface); color: var(--ns-text); border: 1px solid var(--ns-border); border-radius: var(--ns-radius-control); padding: var(--ns-space-1); box-shadow: var(--ns-menu-shadow); }
+[data-baseweb="popover"] [role="option"] { border-radius: 6px; min-height: var(--ns-control-medium); font-size: var(--ns-font-body); }
+[data-baseweb="popover"] [role="option"][aria-selected="true"] { background: var(--ns-surface-hover); color: var(--ns-text); font-weight: var(--ns-font-weight); }
+/* Cards contain real Streamlit widgets; no HTML open/close wrappers. */
+[class*="st-key-ui-card-"] { border-color: var(--ns-border) !important; border-radius: var(--ns-radius-card) !important; background: var(--ns-surface); padding: var(--ns-space-5) !important; box-shadow: var(--ns-shadow); }
+[class*="st-key-ui-card-compact-"] { padding: var(--ns-space-4) !important; }
+.ui-card-title { font-size: var(--ns-font-section); font-weight: var(--ns-font-strong); padding: 0; margin: 0; }
+.ui-card-description { margin: 0; color: var(--ns-muted); font-size: var(--ns-font-label); }
+.ui-stat-card { border: 1px solid var(--ns-border); border-radius: var(--ns-radius-card); padding: var(--ns-space-4); background: var(--ns-surface); min-width: 0; }
+.ui-stat-label { color: var(--ns-muted); font-size: var(--ns-font-label); margin-bottom: var(--ns-space-2); }
+.ui-stat-value { color: var(--ns-text); font-size: 24px; line-height: 1.3; font-weight: var(--ns-font-strong); letter-spacing: -.03em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.ui-stat-target { color: var(--ns-muted); font-size: var(--ns-font-caption); margin: var(--ns-space-2) 0 var(--ns-space-4); }
+.ui-stat-track { height: 4px; background: var(--ns-surface-hover); border-radius: var(--ns-radius-pill); overflow: hidden; }
+.ui-stat-track span { display: block; height: 100%; background: var(--ns-success); border-radius: inherit; }
+.table-header { color: var(--ns-muted); font-size: var(--ns-font-caption); font-weight: var(--ns-font-weight); border-bottom: 1px solid var(--ns-border); padding-bottom: var(--ns-space-3); }
+.ui-table-scroll { overflow-x: auto; border: 1px solid var(--ns-border); border-radius: var(--ns-radius-control); }
+.ui-table-scroll:focus-visible { outline: 2px solid var(--ns-text); outline-offset: 2px; }
+.ui-data-table { width: 100%; border-collapse: collapse; font-size: var(--ns-font-caption); font-variant-numeric: tabular-nums; }
+.ui-data-table th, .ui-data-table td { text-align: left; padding: var(--ns-space-3); border-bottom: 1px solid var(--ns-border); white-space: nowrap; }
+.ui-data-table thead th { background: var(--ns-surface-secondary); color: var(--ns-muted); font-weight: var(--ns-font-weight); }
+.ui-data-table tbody th { font-weight: var(--ns-font-weight); }
+.ui-data-table tbody tr:last-child > * { border-bottom: none; }
+.ui-data-table tbody tr:hover { background: var(--ns-surface-secondary); }
+.ui-data-table .ui-stat-track { min-width: 70px; }
+.food-item-title, .food-catalog-name { font-weight: var(--ns-font-strong); color: var(--ns-text); font-size: var(--ns-font-body); }
+.food-item-meta, .food-catalog-meta { color: var(--ns-muted); font-size: var(--ns-font-caption); line-height: 1.5; }
+.food-detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: var(--ns-space-2); margin: var(--ns-space-2) 0; }
+.food-detail-card { border-radius: var(--ns-radius-control); padding: var(--ns-space-3); background: var(--ns-surface-secondary); }
+.food-detail-label, .food-micro-name { color: var(--ns-muted); font-size: var(--ns-font-caption); }
+.food-detail-value, .food-micro-value { color: var(--ns-text); font-weight: var(--ns-font-strong); font-size: var(--ns-font-label); font-variant-numeric: tabular-nums; }
+.food-micro-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--ns-space-2); }
+.food-micro-item { display: flex; justify-content: space-between; gap: var(--ns-space-2); padding: var(--ns-space-2); border-radius: 6px; background: var(--ns-surface-secondary); }
+.food-micro-value { white-space: nowrap; }
+.st-key-ui-shell [data-testid="stExpander"] { border-color: var(--ns-border); border-radius: var(--ns-radius-control); box-shadow: none; }
+.st-key-ui-shell [data-testid="stMetric"] { background: var(--ns-surface-secondary); padding: var(--ns-space-4); border-radius: var(--ns-radius-card); }
+.st-key-ui-shell [data-testid="stMetricLabel"] { color: var(--ns-muted); }
+.st-key-ui-shell [data-testid="stMetricValue"] { font-size: 24px; font-weight: var(--ns-font-strong); }
+.st-key-ui-shell [data-testid="stAlert"] { border-radius: var(--ns-radius-control); font-size: var(--ns-font-label); }
+[class*="st-key-ui-notice-"] { --notice-color: var(--ns-info); padding: var(--ns-space-3) var(--ns-space-4); background: color-mix(in srgb, var(--notice-color) 8%, var(--ns-surface)); border: 1px solid color-mix(in srgb, var(--notice-color) 24%, transparent); border-radius: var(--ns-radius-control); }
+[class*="st-key-ui-notice-success-"] { --notice-color: var(--ns-success); }
+[class*="st-key-ui-notice-warning-"] { --notice-color: var(--ns-warning); }
+.notice-copy { line-height: 1.5; color: var(--ns-text); font-size: var(--ns-font-label); }
+@media (max-width: 900px) {
+    .stMainBlockContainer { padding: var(--ns-space-6) var(--ns-space-5); }
+    /* Only named top-level splits; nested action columns remain inline. */
+    [class*="st-key-ui-layout-"] > [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
+    [class*="st-key-ui-layout-"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { width: 100%; flex: 1 1 100%; min-width: 0; }
+}
+@media (max-width: 640px) {
+    .stMainBlockContainer { padding: var(--ns-space-5) var(--ns-space-4); }
+    .ui-page-header h1 { font-size: 28px; }
+    .ui-brand { margin-bottom: var(--ns-space-6); }
+    [class*="st-key-ui-card-default-"] { padding: var(--ns-space-4) !important; }
+    .st-key-ui-shell [data-baseweb="tab-list"] { gap: var(--ns-space-4); overflow-x: auto; }
+    .st-key-ui-shell [data-baseweb="tab"] { white-space: nowrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .st-key-ui-shell *, [class*="st-key-ui-"] * { transition: none !important; animation: none !important; }
+}
